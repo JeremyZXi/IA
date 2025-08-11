@@ -7,7 +7,7 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.example.planner.ui.MainController"
+            fx:controller="com.example.planner.ui.PlannerController"
             prefWidth="1200" prefHeight="720">
 
     <!-- LEFT: Sidebar + Today classes list -->

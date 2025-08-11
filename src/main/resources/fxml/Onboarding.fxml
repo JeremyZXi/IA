@@ -1,43 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- src/main/resources/fxml/Onboarding.fxml -->
-
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<StackPane style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.planner.ui.OnboardingController">
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.example.planner.ui.OnboardingController"
+           prefWidth="840" prefHeight="560">
 
-    <!-- Screen 1: Name -->
-    <AnchorPane fx:id="screenName" prefHeight="408.0" prefWidth="538.0" StackPane.alignment="CENTER">
+    <!-- ========== Screen 1: Name ========== -->
+    <AnchorPane fx:id="screenName" prefWidth="840" prefHeight="560">
         <children>
-            <VBox spacing="16" AnchorPane.leftAnchor="60" AnchorPane.rightAnchor="60" AnchorPane.topAnchor="40">
-                <Label style="-fx-font-size: 36px; -fx-font-weight: bold;" text="Welcome" />
-                <Label style="-fx-font-size: 14px;" text="This quick setup configures your planner. You can change settings later." wrapText="true" />
-                <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="What should we call you?" />
-                <TextField fx:id="nameField" promptText="Enter your name" />
-                <Button onAction="#goToSchedule" text="Continue" />
+            <VBox spacing="16" AnchorPane.topAnchor="40" AnchorPane.leftAnchor="40" AnchorPane.rightAnchor="40">
+                <Label text="Welcome! What should we call you?" style="-fx-font-size:18px; -fx-font-weight:bold;"/>
+                <TextField fx:id="nameField" promptText="Your display name" prefWidth="360"/>
+                <HBox spacing="8">
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Next →" onAction="#goToSchedule"/>
+                </HBox>
             </VBox>
         </children>
     </AnchorPane>
 
-    <!-- Screen 2: Schedule -->
-    <AnchorPane fx:id="screenSchedule" visible="false" StackPane.alignment="CENTER">
+    <!-- ========== Screen 2: Period counts + times ========== -->
+    <AnchorPane fx:id="screenSchedule" prefWidth="840" prefHeight="560" visible="false" managed="false">
         <children>
-            <VBox spacing="16" AnchorPane.bottomAnchor="40" AnchorPane.leftAnchor="60" AnchorPane.rightAnchor="60" AnchorPane.topAnchor="40">
-                <Label style="-fx-font-size: 28px; -fx-font-weight: bold;" text="Schedule" />
-                <Label style="-fx-font-size: 14px;" text="Enter the schedule your school uses" />
-                <TextField fx:id="periodsPerDayField" promptText="number of period per day" />
-                <TextField fx:id="daysPerCycleField" promptText="number of day per cycle" />
-                <Separator />
-                <ScrollPane fitToWidth="true" prefHeight="300">
+            <VBox spacing="16" AnchorPane.topAnchor="24" AnchorPane.leftAnchor="24" AnchorPane.rightAnchor="24" AnchorPane.bottomAnchor="24">
+                <HBox spacing="12">
+                    <Label text="Periods per day:"/>
+                    <TextField fx:id="periodsPerDayField" promptText="e.g. 5" prefWidth="80"/>
+                    <Label text="Days per cycle:"/>
+                    <TextField fx:id="daysPerCycleField" promptText="e.g. 7" prefWidth="80"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                </HBox>
+
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
                     <content>
-                        <VBox fx:id="periodRows" spacing="12" />
+                        <VBox fx:id="periodRows" spacing="10" fillWidth="true">
+                            <!-- rows are built dynamically -->
+                        </VBox>
                     </content>
                 </ScrollPane>
-                <HBox spacing="12">
-                    <Button onAction="#backToName" text="Back" />
-                    <Region HBox.hgrow="ALWAYS" />
-                    <Button onAction="#finish" text="Continue" />
+
+                <HBox spacing="8">
+                    <Button text="← Back" onAction="#backToName"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Next: Courses →" onAction="#goToCourses"/>
+                </HBox>
+            </VBox>
+        </children>
+    </AnchorPane>
+
+    <!-- ========== Screen 3: Courses matrix ========== -->
+    <AnchorPane fx:id="screenCourses" prefWidth="840" prefHeight="560" visible="false" managed="false">
+        <children>
+            <VBox spacing="16" AnchorPane.topAnchor="24" AnchorPane.leftAnchor="24" AnchorPane.rightAnchor="24" AnchorPane.bottomAnchor="24">
+                <Label text="Courses for each day and period" style="-fx-font-size:18px; -fx-font-weight:bold;"/>
+                <Label text="Fill in the course name you have at each period for every day in your cycle."/>
+                <ScrollPane fx:id="courseScroll" fitToWidth="true" VBox.vgrow="ALWAYS">
+                    <content>
+                        <GridPane fx:id="courseGrid"/>
+                    </content>
+                </ScrollPane>
+                <HBox spacing="8">
+                    <Button text="← Back" onAction="#backToSchedule"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button fx:id="finishBtn" text="Finish" onAction="#finish"/>
                 </HBox>
             </VBox>
         </children>

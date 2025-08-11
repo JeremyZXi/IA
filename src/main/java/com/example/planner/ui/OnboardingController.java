@@ -4,10 +4,10 @@ import com.example.planner.data.ConfigManager;
 import com.example.planner.model.PeriodTime;
 import com.example.planner.model.UserSettings;
 import javafx.fxml.FXML;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.util.StringConverter;
 
 import java.time.LocalTime;
@@ -17,20 +17,25 @@ import java.util.List;
 
 public class OnboardingController {
 
-    // === root panes (two steps in one FXML) ===
+    // ===== Screens =====
     @FXML private AnchorPane screenName;
-    @FXML private AnchorPane screenSchedule;
+    @FXML private AnchorPane screenSchedule;  // periods/day, days/cycle, and time spinners
+    @FXML private AnchorPane screenCourses;   // NEW: courses matrix
 
-    // === step 1 ===
+    // ===== step 1 =====
     @FXML private TextField nameField;
-    @FXML private Button    finishBtn; // optional: if you gave it an fx:id
+    @FXML private Button finishBtn; // safety wire-up if needed
 
-    // === step 2 ===
+    // ===== step 2 =====
     @FXML private TextField periodsPerDayField;
     @FXML private TextField daysPerCycleField;
-    @FXML private VBox      periodRows; // container inside your ScrollPane
+    @FXML private VBox periodRows; // each row: "Period n" [start]—[end]
 
-    // Time formatting for spinners
+    // ===== step 3 =====
+    @FXML private ScrollPane courseScroll;
+    @FXML private GridPane courseGrid; // dynamic (rows = periods, cols = days)
+
+    // ===== time formatting =====
     private final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
     private final StringConverter<LocalTime> TIME_CONVERTER = new StringConverter<>() {
         @Override public String toString(LocalTime t) { return t == null ? "" : TIME_FMT.format(t); }
@@ -44,52 +49,61 @@ public class OnboardingController {
 
     @FXML
     private void initialize() {
-        // show name screen first
-        setPane(screenName, true);
-        setPane(screenSchedule, false);
+        // show name first
+        show(screenName); hide(screenSchedule); hide(screenCourses);
 
-        // rebuild period rows when "periods per day" changes
-        periodsPerDayField.textProperty().addListener((o, a, b) -> rebuildRows());
+        periodsPerDayField.textProperty().addListener((o,a,b) -> rebuildTimeRows());
+        rebuildTimeRows();
 
-        // initial build (handles empty input gracefully)
-        rebuildRows();
-
-        // safety: if Scene Builder dropped the onAction, wire the finish button here
         if (finishBtn != null) finishBtn.setOnAction(e -> finish());
     }
 
-    // === navigation ===
-    @FXML
-    private void goToSchedule() {
+    // ===== nav =====
+    @FXML private void goToSchedule() {
         if (safeTrim(nameField.getText()).isEmpty()) {
             showAlert("Please enter your name.");
             return;
         }
-        setPane(screenName, false);
-        setPane(screenSchedule, true);
-        if (periodRows.getChildren().isEmpty()) rebuildRows();
+        hide(screenName); show(screenSchedule); hide(screenCourses);
+        if (periodRows.getChildren().isEmpty()) rebuildTimeRows();
     }
 
-    @FXML
-    private void backToName() {
-        setPane(screenSchedule, false);
-        setPane(screenName, true);
+    @FXML private void backToName() {
+        show(screenName); hide(screenSchedule); hide(screenCourses);
     }
 
-    private void setPane(AnchorPane pane, boolean show) {
-        pane.setVisible(show);
-        pane.setManaged(show);
+    @FXML private void goToCourses() {
+        // validate basic numbers & times first
+        Integer periods = parsePositiveIntOrNull(periodsPerDayField.getText());
+        Integer days    = parsePositiveIntOrNull(daysPerCycleField.getText());
+        if (periods == null || days == null || periods <= 0 || days <= 0) {
+            showAlert("Please enter valid positive numbers for periods/day and days/cycle.");
+            return;
+        }
+
+        if (!validateNoOverlapAndExplain()) {
+            validateNoOverlapStylesOnly();
+            return;
+        }
+
+        buildCourseGrid(periods, days);
+        hide(screenName); hide(screenSchedule); show(screenCourses);
     }
 
-    private String safeTrim(String s) { return s == null ? "" : s.trim(); }
+    @FXML private void backToSchedule() {
+        hide(screenName); show(screenSchedule); hide(screenCourses);
+    }
 
-    // === UI building ===
-    private void rebuildRows() {
+    private void show(AnchorPane p){ p.setVisible(true);  p.setManaged(true); }
+    private void hide(AnchorPane p){ p.setVisible(false); p.setManaged(false); }
+    private String safeTrim(String s){ return s==null? "" : s.trim(); }
+
+    // ===== step 2: time rows =====
+    private void rebuildTimeRows() {
         int periods = parsePositiveInt(periodsPerDayField.getText(), 0);
         buildPeriodTimeTemplate(periods);
     }
 
-    /** Build one set of period-time rows; these times apply to every day. */
     private void buildPeriodTimeTemplate(int periodsPerDay) {
         periodRows.getChildren().clear();
         if (periodsPerDay <= 0) return;
@@ -101,29 +115,25 @@ public class OnboardingController {
             Label lbl = new Label("Period " + p);
             lbl.setMinWidth(90);
 
-            Spinner<LocalTime> start = makeTimeSpinner(LocalTime.of(8, 0));   // default 08:00
+            Spinner<LocalTime> start = makeTimeSpinner(LocalTime.of(8, 0));
             Label dash = new Label("—");
-            Spinner<LocalTime> end   = makeTimeSpinner(LocalTime.of(8, 45));  // default 08:45
+            Spinner<LocalTime> end   = makeTimeSpinner(LocalTime.of(8, 45));
 
-            // row-level validation: end must be after start
+            // row check
             end.valueProperty().addListener((o, ov, nv) -> {
                 LocalTime s = start.getValue();
                 if (nv != null && s != null && !nv.isAfter(s)) {
-                    end.getEditor().setStyle("-fx-background-color: #ffefef;");
-                } else {
-                    end.getEditor().setStyle(null);
-                }
+                    end.getEditor().setStyle("-fx-background-color:#ffefef;");
+                } else end.getEditor().setStyle(null);
             });
 
-            // real-time global overlap validation
+            // global overlap, live
             start.valueProperty().addListener((o, ov, nv) -> validateNoOverlapStylesOnly());
             end.valueProperty().addListener((o, ov, nv) -> validateNoOverlapStylesOnly());
 
             row.getChildren().addAll(lbl, start, dash, end);
             periodRows.getChildren().add(row);
         }
-
-        // run once to clear/mark initial state
         validateNoOverlapStylesOnly();
     }
 
@@ -135,51 +145,47 @@ public class OnboardingController {
         SpinnerValueFactory<LocalTime> vf = new SpinnerValueFactory<>() {
             private LocalTime value = initial;
             { setConverter(TIME_CONVERTER); setValue(value); }
-
             @Override public void decrement(int steps) {
-                if (value == null) value = LocalTime.of(0, 0);
+                if (value == null) value = LocalTime.of(0,0);
                 value = value.minusMinutes(5L * steps);
                 setValue(value);
             }
             @Override public void increment(int steps) {
-                if (value == null) value = LocalTime.of(0, 0);
+                if (value == null) value = LocalTime.of(0,0);
                 value = value.plusMinutes(5L * steps);
                 setValue(value);
             }
         };
         spinner.setValueFactory(vf);
 
-        // commit typed text on focus loss / Enter
         spinner.getEditor().focusedProperty().addListener((obs, was, is) -> {
             if (!is) commitEditorText(spinner);
         });
         spinner.getEditor().setOnAction(e -> commitEditorText(spinner));
-
         return spinner;
     }
 
     private void commitEditorText(Spinner<LocalTime> spinner) {
-        String text = spinner.getEditor().getText();
-        LocalTime parsed = TIME_CONVERTER.fromString(text);
+        LocalTime parsed = TIME_CONVERTER.fromString(spinner.getEditor().getText());
         if (parsed != null) {
             spinner.getValueFactory().setValue(parsed);
             spinner.getEditor().setStyle(null);
         } else {
-            spinner.getEditor().setStyle("-fx-background-color: #ffefef;");
+            spinner.getEditor().setStyle("-fx-background-color:#ffefef;");
         }
         validateNoOverlapStylesOnly();
     }
 
     private int parsePositiveInt(String s, int fallback) {
-        try {
-            int v = Integer.parseInt(s.trim());
-            return v > 0 ? v : fallback;
-        } catch (Exception e) {
-            return fallback;
-        }
+        try { int v = Integer.parseInt(s.trim()); return v > 0 ? v : fallback; }
+        catch (Exception e) { return fallback; }
+    }
+    private Integer parsePositiveIntOrNull(String s) {
+        try { int v = Integer.parseInt(s.trim()); return v > 0 ? v : null; }
+        catch (Exception e) { return null; }
     }
 
-    // === overlap helpers ===
+    // ===== overlap helpers =====
     @SuppressWarnings("unchecked")
     private Spinner<LocalTime> getStartSpinner(HBox row) {
         return (Spinner<LocalTime>) row.getChildren().get(1);
@@ -189,9 +195,7 @@ public class OnboardingController {
         return (Spinner<LocalTime>) row.getChildren().get(3);
     }
 
-    /** Live validation: mark fields red if any overlap or end<=start */
     private void validateNoOverlapStylesOnly() {
-        // clear styles
         for (var n : periodRows.getChildren()) {
             if (n instanceof HBox row) {
                 getStartSpinner(row).getEditor().setStyle(null);
@@ -205,12 +209,10 @@ public class OnboardingController {
             LocalTime e = getEndSpinner(row).getValue();
             if (s == null || e == null) continue;
 
-            // same-row check
             if (!e.isAfter(s)) {
                 getStartSpinner(row).getEditor().setStyle("-fx-background-color:#ffefef;");
                 getEndSpinner(row).getEditor().setStyle("-fx-background-color:#ffefef;");
             }
-            // overlap with previous row: require lastEnd <= s
             if (lastEnd != null && s.isBefore(lastEnd)) {
                 getStartSpinner(row).getEditor().setStyle("-fx-background-color:#ffefef;");
                 int idx = periodRows.getChildren().indexOf(row);
@@ -222,7 +224,6 @@ public class OnboardingController {
         }
     }
 
-    /** Strict check for save: shows a readable message + returns false on failure. */
     private boolean validateNoOverlapAndExplain() {
         LocalTime lastEnd = null;
         int rowIndex = 0;
@@ -249,8 +250,86 @@ public class OnboardingController {
         return true;
     }
 
+    // ===== step 3: courses grid =====
+    private void buildCourseGrid(int periodsPerDay, int daysPerCycle) {
+        courseGrid.getChildren().clear();
+        courseGrid.getColumnConstraints().clear();
+        courseGrid.getRowConstraints().clear();
 
-    // === save ===
+        courseGrid.setHgap(8);
+        courseGrid.setVgap(8);
+        courseGrid.setPadding(new Insets(8));
+
+        // column constraints (one for row header + N day columns)
+        for (int c = 0; c <= daysPerCycle; c++) {
+            ColumnConstraints cc = new ColumnConstraints();
+            cc.setPercentWidth(c == 0 ? 18 : (82.0 / daysPerCycle));
+            courseGrid.getColumnConstraints().add(cc);
+        }
+        // row constraints (one for header + M period rows)
+        for (int r = 0; r <= periodsPerDay; r++) {
+            RowConstraints rc = new RowConstraints();
+            rc.setMinHeight(30);
+            courseGrid.getRowConstraints().add(rc);
+        }
+
+        // headers
+        Label corner = new Label("Period / Day");
+        corner.setStyle("-fx-font-weight:bold;");
+        courseGrid.add(corner, 0, 0);
+
+        for (int d = 1; d <= daysPerCycle; d++) {
+            char letter = (char) ('A' + d - 1);
+            Label day = new Label("Day " + letter);
+            day.setStyle("-fx-font-weight:bold;");
+            GridPane.setHalignment(day, HPos.CENTER);
+            courseGrid.add(day, d, 0);
+        }
+
+
+        // rows
+        for (int p = 1; p <= periodsPerDay; p++) {
+            Label rowHead = new Label("Period " + p);
+            rowHead.setStyle("-fx-font-weight:bold;");
+            courseGrid.add(rowHead, 0, p);
+
+            for (int d = 1; d <= daysPerCycle; d++) {
+                TextField tf = new TextField();
+                tf.setPromptText("Course");
+                // set an id so we can retrieve later if needed
+                tf.setId("course_p" + p + "_d" + d);
+                courseGrid.add(tf, d, p);
+            }
+        }
+    }
+
+    private List<List<String>> collectCourseMatrix() {
+        int periods = Integer.parseInt(periodsPerDayField.getText().trim());
+        int days    = Integer.parseInt(daysPerCycleField.getText().trim());
+        List<List<String>> matrix = new ArrayList<>(days);
+
+        for (int d = 1; d <= days; d++) {
+            List<String> day = new ArrayList<>(periods);
+            for (int p = 1; p <= periods; p++) {
+                TextField tf = (TextField) lookupNodeInGrid(courseGrid, d, p);
+                String name = tf == null ? "" : tf.getText().trim();
+                day.add(name);
+            }
+            matrix.add(day);
+        }
+        return matrix;
+    }
+
+    private static javafx.scene.Node lookupNodeInGrid(GridPane grid, int col, int row) {
+        for (javafx.scene.Node n : grid.getChildren()) {
+            Integer c = GridPane.getColumnIndex(n);
+            Integer r = GridPane.getRowIndex(n);
+            if ((c == null ? 0 : c) == col && (r == null ? 0 : r) == row) return n;
+        }
+        return null;
+    }
+
+    // ===== save =====
     @FXML
     public void finish() {
         try {
@@ -267,46 +346,49 @@ public class OnboardingController {
                 return;
             }
 
-            // strict overlap validation before collecting
+            // strict overlap validation
             if (!validateNoOverlapAndExplain()) {
-                validateNoOverlapStylesOnly(); // refresh red hints
+                validateNoOverlapStylesOnly();
                 return;
             }
 
-            // Collect the daily template from spinners
+            // collect times
             List<PeriodTime> template = new ArrayList<>();
             int periodNumber = 0;
-
             for (var node : periodRows.getChildren()) {
                 if (node instanceof HBox row) {
-                    var sSpin = getStartSpinner(row);
-                    var eSpin = getEndSpinner(row);
-                    LocalTime s = sSpin.getValue();
-                    LocalTime e = eSpin.getValue();
+                    var s = getStartSpinner(row).getValue();
+                    var e = getEndSpinner(row).getValue();
                     periodNumber++;
                     template.add(new PeriodTime(periodNumber, s, e));
                 }
             }
-
             if (periodNumber != periods) {
                 showAlert("Number of time rows doesn’t match periods per day.");
                 return;
             }
 
-            // Build UserSettings and save via your ConfigManager
+            // collect courses (if courses screen was visited, grid exists)
+            List<List<String>> courseMatrix = collectCourseMatrix();
+
+            // build settings
             UserSettings settings = new UserSettings();
             settings.setDisplayName(name);
             settings.setDaysPerCycle(days);
             settings.setPeriodsPerDay(periods);
             settings.setPeriods(template);
 
-            ConfigManager.save(settings);
+            try {
+                // will compile once you add setters to your model
+                settings.getClass().getMethod("setCourseMatrix", List.class).invoke(settings, courseMatrix);
+            } catch (NoSuchMethodException ignore) {
+                System.err.println("Tip: add setCourseMatrix(List<List<String>>) to UserSettings to persist course names.");
+            }
 
+            ConfigManager.save(settings);
             showAlert("Settings saved to:\n" + ConfigManager.settingsPath().toAbsolutePath());
 
-            // TODO: Navigate to main UI
-            // Navigator.loadMainPlaceholder();
-
+            // TODO: navigate to main UI
         } catch (NumberFormatException ex) {
             showAlert("Please enter numbers for periods/day and days/cycle.");
         } catch (Exception ex) {

@@ -21,6 +21,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +51,7 @@ public class PlannerController {
     @FXML private Label detailMetaLabel, detailTitleLabel, detailBodyLabel;
     @FXML private VBox attachmentListVBox;
     @FXML private Button addAttachmentBtn;
-
+    private LocalDate date = LocalDate.parse("2025-08-10");//LocalDate.now();
     @FXML
     private void initialize() throws Exception {
         //load data
@@ -61,6 +62,7 @@ public class PlannerController {
         List<PeriodTime> periodTimes = settings.getPeriods();
 
 
+
         List<List<Course>> schedule = new ArrayList<>();
         for(int i = 0;i<daysPerCycle;i++){
             List<Course> day = new ArrayList<>();
@@ -69,8 +71,13 @@ public class PlannerController {
             }
             schedule.add(day);
         }
-
-        List<Course> courseToday = schedule.get(letterDate2Index(letterDate(LocalDate.now())));
+        //add the correct courses
+        List<Course> courseToday = new ArrayList<>();
+        if (letterDate(date) != '0'){
+            courseToday = schedule.get(letterDate2Index(letterDate(date)));
+        } else {
+            courseToday.add(new Course("Break",'0',new PeriodTime(0, LocalTime.parse("00:00"),LocalTime.parse("23:59"))));
+        }
         for(Course course : courseToday){
             addClassCard(course.getCourseName(),"Period "+course.getPeriodTime().getPeriodNumber() +" | "+course.getPeriodTime().getStart().toString()+"~"+course.getPeriodTime().getEnd().toString());
         }
@@ -79,7 +86,7 @@ public class PlannerController {
 
         // Header text
         greetingLabel.setText("Hi, "+settings.getDisplayName());
-        dateLabel.setText(humanDate(LocalDate.now()));
+        dateLabel.setText(humanDate(date));
 
 
 
@@ -140,7 +147,7 @@ public class PlannerController {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button open = new Button("Open");
-        open.setOnAction(e -> setDetail(cb.isSelected(), humanDate(LocalDate.now()) + " • " + periodInfoLabel.getText(),
+        open.setOnAction(e -> setDetail(cb.isSelected(), humanDate(date) + " • " + periodInfoLabel.getText(),
                 title, preview + "\n\n(Opened from center list)"));
 
         row.getChildren().addAll(cb, text, spacer, open);
@@ -210,7 +217,11 @@ public class PlannerController {
         return letter;
     }
     private int letterDate2Index(char letter){
-       return (int)letter - 65;
+        if(letter == '0'){
+            return -1;
+        } else {
+            return (int)letter - 65;
+        }
     }
     /** this method reads CSV that maps letter date to actual date*/
     private List<String[]> readCSV(String file) {

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<StackPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.example.planner.ui.OnboardingController" style="-fx-background-color: white;">
+    <children>
+
+        <!-- Screen 1: name -->
+        <AnchorPane fx:id="screenName" visible="true" managed="true">
+            <children>
+                <VBox spacing="16" AnchorPane.topAnchor="40" AnchorPane.leftAnchor="60" AnchorPane.rightAnchor="60">
+                    <Label text="Welcome" style="-fx-font-size: 36px; -fx-font-weight: bold;"/>
+                    <Label wrapText="true" style="-fx-font-size: 14px;"
+                           text="This quick setup configures your planner. You can change settings later."/>
+                    <Label text="What should we call you?" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+                    <TextField fx:id="nameField" promptText="Enter your name" />
+                    <Button text="Continue" onAction="#goToSchedule"/>
+                </VBox>
+            </children>
+        </AnchorPane>
+
+        <!-- Screen 2: schedule -->
+        <AnchorPane fx:id="screenSchedule" visible="false" managed="false">
+            <children>
+                <VBox spacing="16" AnchorPane.topAnchor="40" AnchorPane.leftAnchor="60" AnchorPane.rightAnchor="60" AnchorPane.bottomAnchor="40">
+                    <Label text="Welcome" style="-fx-font-size: 36px; -fx-font-weight: bold;"/>
+                    <Label text="Enter the schedule your school uses" style="-fx-font-size: 18px;"/>
+                    <TextField fx:id="periodsPerDayField" promptText="number of period per day"/>
+                    <TextField fx:id="daysPerCycleField" promptText="number of day per cycle"/>
+                    <Separator/>
+
+                    <ScrollPane fitToWidth="true" prefHeight="300">
+                        <content>
+                            <VBox fx:id="periodRows" spacing="12"/>
+                        </content>
+                    </ScrollPane>
+
+                    <HBox spacing="12">
+                        <Button text="Back" onAction="#backToName"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Continue" onAction="#finish"/>
+                    </HBox>
+                </VBox>
+            </children>
+        </AnchorPane>
+
+    </children>
+</StackPane>

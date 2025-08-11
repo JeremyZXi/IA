@@ -4,10 +4,13 @@ import com.example.planner.data.ConfigManager;
 import com.example.planner.model.PeriodTime;
 import com.example.planner.model.UserSettings;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
 import java.time.LocalTime;
@@ -18,64 +21,93 @@ import java.util.List;
 public class OnboardingController {
 
     // ===== Screens =====
-    @FXML private AnchorPane screenName;
-    @FXML private AnchorPane screenSchedule;  // periods/day, days/cycle, and time spinners
-    @FXML private AnchorPane screenCourses;   // NEW: courses matrix
+    @FXML
+    private AnchorPane screenName;
+    @FXML
+    private AnchorPane screenSchedule;  // periods/day, days/cycle, and time spinners
+    @FXML
+    private AnchorPane screenCourses;
 
     // ===== step 1 =====
-    @FXML private TextField nameField;
-    @FXML private Button finishBtn; // safety wire-up if needed
+    @FXML
+    private TextField nameField;
+    @FXML
+    private Button finishBtn;
 
     // ===== step 2 =====
-    @FXML private TextField periodsPerDayField;
-    @FXML private TextField daysPerCycleField;
-    @FXML private VBox periodRows; // each row: "Period n" [start]—[end]
+    @FXML
+    private TextField periodsPerDayField;
+    @FXML
+    private TextField daysPerCycleField;
+    @FXML
+    private VBox periodRows; // each row: "Period n" [start]—[end]
 
     // ===== step 3 =====
-    @FXML private ScrollPane courseScroll;
-    @FXML private GridPane courseGrid; // dynamic (rows = periods, cols = days)
+    @FXML
+    private ScrollPane courseScroll;
+    @FXML
+    private GridPane courseGrid; // rows = periods, cols = days
 
     // ===== time formatting =====
     private final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
     private final StringConverter<LocalTime> TIME_CONVERTER = new StringConverter<>() {
-        @Override public String toString(LocalTime t) { return t == null ? "" : TIME_FMT.format(t); }
-        @Override public LocalTime fromString(String s) {
+        @Override
+        public String toString(LocalTime t) {
+            return t == null ? "" : TIME_FMT.format(t);
+        }
+
+        @Override
+        public LocalTime fromString(String s) {
             if (s == null) return null;
             s = s.trim();
             if (s.isEmpty()) return null;
-            try { return LocalTime.parse(s, TIME_FMT); } catch (Exception e) { return null; }
+            try {
+                return LocalTime.parse(s, TIME_FMT);
+            } catch (Exception e) {
+                return null;
+            }
         }
     };
 
     @FXML
     private void initialize() {
         // show name first
-        show(screenName); hide(screenSchedule); hide(screenCourses);
+        show(screenName);
+        hide(screenSchedule);
+        hide(screenCourses);
 
-        periodsPerDayField.textProperty().addListener((o,a,b) -> rebuildTimeRows());
+        periodsPerDayField.textProperty().addListener((o, a, b) -> rebuildTimeRows());
         rebuildTimeRows();
 
         if (finishBtn != null) finishBtn.setOnAction(e -> finish());
     }
 
     // ===== nav =====
-    @FXML private void goToSchedule() {
+    @FXML
+    private void goToSchedule() {
         if (safeTrim(nameField.getText()).isEmpty()) {
             showAlert("Please enter your name.");
             return;
         }
-        hide(screenName); show(screenSchedule); hide(screenCourses);
-        if (periodRows.getChildren().isEmpty()) rebuildTimeRows();
+        hide(screenName);
+        show(screenSchedule);
+        hide(screenCourses);
+        if (periodRows.getChildren().isEmpty()) {
+            rebuildTimeRows();}
     }
 
-    @FXML private void backToName() {
-        show(screenName); hide(screenSchedule); hide(screenCourses);
+    @FXML
+    private void backToName() {
+        show(screenName);
+        hide(screenSchedule);
+        hide(screenCourses);
     }
 
-    @FXML private void goToCourses() {
+    @FXML
+    private void goToCourses() {
         // validate basic numbers & times first
         Integer periods = parsePositiveIntOrNull(periodsPerDayField.getText());
-        Integer days    = parsePositiveIntOrNull(daysPerCycleField.getText());
+        Integer days = parsePositiveIntOrNull(daysPerCycleField.getText());
         if (periods == null || days == null || periods <= 0 || days <= 0) {
             showAlert("Please enter valid positive numbers for periods/day and days/cycle.");
             return;
@@ -87,16 +119,31 @@ public class OnboardingController {
         }
 
         buildCourseGrid(periods, days);
-        hide(screenName); hide(screenSchedule); show(screenCourses);
+        hide(screenName);
+        hide(screenSchedule);
+        show(screenCourses);
     }
 
-    @FXML private void backToSchedule() {
-        hide(screenName); show(screenSchedule); hide(screenCourses);
+    @FXML
+    private void backToSchedule() {
+        hide(screenName);
+        show(screenSchedule);
+        hide(screenCourses);
     }
 
-    private void show(AnchorPane p){ p.setVisible(true);  p.setManaged(true); }
-    private void hide(AnchorPane p){ p.setVisible(false); p.setManaged(false); }
-    private String safeTrim(String s){ return s==null? "" : s.trim(); }
+    private void show(AnchorPane p) {
+        p.setVisible(true);
+        p.setManaged(true);
+    }
+
+    private void hide(AnchorPane p) {
+        p.setVisible(false);
+        p.setManaged(false);
+    }
+
+    private String safeTrim(String s) {
+        return s == null ? "" : s.trim();
+    }
 
     // ===== step 2: time rows =====
     private void rebuildTimeRows() {
@@ -117,7 +164,7 @@ public class OnboardingController {
 
             Spinner<LocalTime> start = makeTimeSpinner(LocalTime.of(8, 0));
             Label dash = new Label("—");
-            Spinner<LocalTime> end   = makeTimeSpinner(LocalTime.of(8, 45));
+            Spinner<LocalTime> end = makeTimeSpinner(LocalTime.of(8, 45));
 
             // row check
             end.valueProperty().addListener((o, ov, nv) -> {
@@ -144,14 +191,22 @@ public class OnboardingController {
 
         SpinnerValueFactory<LocalTime> vf = new SpinnerValueFactory<>() {
             private LocalTime value = initial;
-            { setConverter(TIME_CONVERTER); setValue(value); }
-            @Override public void decrement(int steps) {
-                if (value == null) value = LocalTime.of(0,0);
+
+            {
+                setConverter(TIME_CONVERTER);
+                setValue(value);
+            }
+
+            @Override
+            public void decrement(int steps) {
+                if (value == null) {value = LocalTime.of(0, 0);}
                 value = value.minusMinutes(5L * steps);
                 setValue(value);
             }
-            @Override public void increment(int steps) {
-                if (value == null) value = LocalTime.of(0,0);
+
+            @Override
+            public void increment(int steps) {
+                if (value == null) {value = LocalTime.of(0, 0);}
                 value = value.plusMinutes(5L * steps);
                 setValue(value);
             }
@@ -177,12 +232,21 @@ public class OnboardingController {
     }
 
     private int parsePositiveInt(String s, int fallback) {
-        try { int v = Integer.parseInt(s.trim()); return v > 0 ? v : fallback; }
-        catch (Exception e) { return fallback; }
+        try {
+            int v = Integer.parseInt(s.trim());
+            return v > 0 ? v : fallback;
+        } catch (Exception e) {
+            return fallback;
+        }
     }
+
     private Integer parsePositiveIntOrNull(String s) {
-        try { int v = Integer.parseInt(s.trim()); return v > 0 ? v : null; }
-        catch (Exception e) { return null; }
+        try {
+            int v = Integer.parseInt(s.trim());
+            return v > 0 ? v : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ===== overlap helpers =====
@@ -190,6 +254,7 @@ public class OnboardingController {
     private Spinner<LocalTime> getStartSpinner(HBox row) {
         return (Spinner<LocalTime>) row.getChildren().get(1);
     }
+
     @SuppressWarnings("unchecked")
     private Spinner<LocalTime> getEndSpinner(HBox row) {
         return (Spinner<LocalTime>) row.getChildren().get(3);
@@ -305,7 +370,7 @@ public class OnboardingController {
 
     private List<List<String>> collectCourseMatrix() {
         int periods = Integer.parseInt(periodsPerDayField.getText().trim());
-        int days    = Integer.parseInt(daysPerCycleField.getText().trim());
+        int days = Integer.parseInt(daysPerCycleField.getText().trim());
         List<List<String>> matrix = new ArrayList<>(days);
 
         for (int d = 1; d <= days; d++) {
@@ -340,7 +405,7 @@ public class OnboardingController {
             }
 
             int periods = Integer.parseInt(safeTrim(periodsPerDayField.getText()));
-            int days    = Integer.parseInt(safeTrim(daysPerCycleField.getText()));
+            int days = Integer.parseInt(safeTrim(daysPerCycleField.getText()));
             if (periods <= 0 || days <= 0) {
                 showAlert("Periods/day and days/cycle must be positive.");
                 return;
@@ -378,17 +443,20 @@ public class OnboardingController {
             settings.setPeriodsPerDay(periods);
             settings.setPeriods(template);
 
-            try {
-                // will compile once you add setters to your model
-                settings.getClass().getMethod("setCourseMatrix", List.class).invoke(settings, courseMatrix);
-            } catch (NoSuchMethodException ignore) {
-                System.err.println("Tip: add setCourseMatrix(List<List<String>>) to UserSettings to persist course names.");
-            }
+
+
+            settings.getClass().getMethod("setCourseMatrix", List.class).invoke(settings, courseMatrix);
+
 
             ConfigManager.save(settings);
             showAlert("Settings saved to:\n" + ConfigManager.settingsPath().toAbsolutePath());
 
             // TODO: navigate to main UI
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/MainPlaceholder.fxml"));
+            Stage stage = (Stage) screenName.getScene().getWindow();
+            stage.setScene(new Scene(loader.load()));
+            stage.setTitle("Planner");
+            stage.show();
         } catch (NumberFormatException ex) {
             showAlert("Please enter numbers for periods/day and days/cycle.");
         } catch (Exception ex) {

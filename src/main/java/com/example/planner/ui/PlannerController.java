@@ -1,12 +1,17 @@
 package com.example.planner.ui;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import java.io.File;
+
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 
-import java.io.File;
+
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
 import java.util.Locale;
@@ -34,9 +39,14 @@ public class PlannerController {
     @FXML private Button addAttachmentBtn;
 
     @FXML
-    private void initialize() {
+    private void initialize() throws IOException {
+        //load data
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(new File("data/settings.json"));
+        String displayName = jsonNode.get("displayName").asText();
         // Header text
-        greetingLabel.setText("Hi, Xiyan");
+        greetingLabel.setText("Hi,"+displayName);
         dateLabel.setText(humanDate(LocalDate.now()));
 
         // Hook up buttons (stubs)

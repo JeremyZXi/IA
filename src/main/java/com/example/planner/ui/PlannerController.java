@@ -1,5 +1,8 @@
 package com.example.planner.ui;
 
+import com.example.planner.model.PeriodTime;
+import com.example.planner.model.UserSettings;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.File;
@@ -19,9 +22,13 @@ import com.opencsv.CSVReaderBuilder;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import com.example.planner.model.Course;
+import com.example.planner.data.ConfigManager;
+import com.example.planner.model.PeriodTime;
 public class PlannerController {
 
     // Nav (left narrow)
@@ -45,37 +52,38 @@ public class PlannerController {
     @FXML private Button addAttachmentBtn;
 
     @FXML
-    private void initialize() throws IOException {
+    private void initialize() throws Exception {
         //load data
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(new File("data/settings.json"));
-        String displayName = jsonNode.get("displayName").asText();
+        UserSettings settings = ConfigManager.load();
+        int periodsPerDay = settings.getPeriodsPerDay();
+        int daysPerCycle = settings.getDaysPerCycle();
+        List<List<String>> courseMatrix = settings.getCourseMatrix();
+        List<PeriodTime> periodTimes = settings.getPeriods();
+
+
+        List<List<Course>> schedule = new ArrayList<>();
+        for(int i = 0;i<daysPerCycle;i++){
+            List<Course> day = new ArrayList<>();
+            for(int j = 0; j<periodsPerDay;j++){
+                day.add(new Course(courseMatrix.get(i).get(j),(char)(65+i),periodTimes.get(j)));
+            }
+            schedule.add(day);
+        }
+
+        List<Course> courseToday = schedule.get(letterDate2Index(letterDate(LocalDate.now())));
+        for(Course course : courseToday){
+            addClassCard(course.getCourseName(),"Period "+course.getPeriodTime().getPeriodNumber() +" | "+course.getPeriodTime().getStart().toString()+"~"+course.getPeriodTime().getEnd().toString());
+        }
+
+
+
         // Header text
-        greetingLabel.setText("Hi, "+displayName);
+        greetingLabel.setText("Hi, "+settings.getDisplayName());
         dateLabel.setText(humanDate(LocalDate.now()));
 
 
 
-        // Demo
-        addClassCard("Chinese Language & Literature", "Period 1 08:00–09:30");
-        addClassCard("Math AA HL", "Period 2 09:45–10:15");
-        addClassCard("English", "Period 3 10:20–12:15");
-        addClassCard("Physics HL", "Period 4 08:00–09:30");
 
-        setCenterHeader("English", "Period 3 10:20–12:15");
-
-        addTodayTaskCard(false, "Anglophone culture presentation", "10:20–10:30",
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc maximus.");
-        addTodayTaskCard(false, "Anglophone culture presentation", "10:20–10:30",
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
-        addTodayTaskCard(false, "Anglophone culture presentation", "10:20–10:30",
-                "Sapien dui mattis dui, non pulvinar lorem nec erat.");
-
-        addPendingTaskCard(false, "Follow up with Bob", "From Aug 2 2025 • Period 1 • English",
-                "Short pending task preview text.");
-
-        setDetail(false, "Aug 11 2025 • Period 3 • English", "Anglophone culture presentation",
-                "Select a task to see the full description.\n\nThis pane scrolls for longer content.");
     }
 
     /* ========== Public helpers to add dynamic content ========== */
@@ -182,10 +190,10 @@ public class PlannerController {
         if (file != null) nameLabel.setText(file.getName());
     }
 
-    private static String humanDate(LocalDate d) {
+    private String humanDate(LocalDate d) {
         String dow = d.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
         String mon = d.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-        return dow + " " + mon + " " + d.getDayOfMonth() + " " + d.getYear();
+        return dow + " " + mon + " " + d.getDayOfMonth() + "," +letterDate(d)+" day";
     }
     //TODO: use better search algorithm
     /**convert localdate to letter day using linear search
@@ -193,13 +201,16 @@ public class PlannerController {
      * @return letter date*/
     private char letterDate(LocalDate d){
         char letter = '0';
-        List<String[]> data = readCSV("src/letter_day_calendar.csv");
+        List<String[]> data = readCSV("test data/letter_day_calendar.csv");
         for(String[] row:data){
             if(row[0].equals(d.toString())){
                 letter = row[2].charAt(0);
             }
         }
         return letter;
+    }
+    private int letterDate2Index(char letter){
+       return (int)letter - 65;
     }
     /** this method reads CSV that maps letter date to actual date*/
     private List<String[]> readCSV(String file) {

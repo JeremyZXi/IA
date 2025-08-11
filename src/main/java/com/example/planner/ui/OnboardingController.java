@@ -105,6 +105,7 @@ public class OnboardingController {
     @FXML
     private void goToCourses() {
         // validate basic numbers & times first
+        //TODO:Optimize prompt text
         Integer periods = periodPerDay;
         Integer days = parsePositiveIntOrNull(daysPerCycleField.getText());
         if (periods == null || days == null || periods <= 0 || days <= 0) {

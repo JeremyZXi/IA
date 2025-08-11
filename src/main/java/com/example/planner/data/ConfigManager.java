@@ -5,14 +5,16 @@ import com.example.planner.model.UserSettings;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class ConfigManager {
-    private static final Path DIR = Path.of(System.getProperty("user.home"), ".planner");
+    // Saves to <project-root>/data/settings.json
+    private static final Path DIR  = Path.of(System.getProperty("user.dir"), "data");
     private static final Path FILE = DIR.resolve("settings.json");
-    private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule());
+
+    private static final ObjectMapper MAPPER =
+            new ObjectMapper().registerModule(new JavaTimeModule());
 
     public static boolean settingsExists() {
         return Files.exists(FILE);
@@ -27,7 +29,5 @@ public class ConfigManager {
         return MAPPER.readValue(FILE.toFile(), UserSettings.class);
     }
 
-    public static File settingsFile() {
-        return FILE.toFile();
-    }
+    public static Path settingsPath() { return FILE; }
 }

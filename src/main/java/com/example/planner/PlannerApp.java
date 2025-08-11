@@ -11,7 +11,7 @@ public class PlannerApp extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         if (ConfigManager.settingsExists()) {
-            // TODO: load your real main UI here.
+            // TODO: load real main UI here
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/MainPlaceholder.fxml"));
             stage.setScene(new Scene(loader.load()));
             stage.setTitle("Planner");

@@ -51,7 +51,7 @@ public class OnboardingController {
         // rebuild period rows when "periods per day" changes
         periodsPerDayField.textProperty().addListener((o, a, b) -> rebuildRows());
 
-        // first-time build (handles empty input gracefully)
+        // initial build (handles empty input gracefully)
         rebuildRows();
 
         // safety: if Scene Builder dropped the onAction, wire the finish button here
@@ -105,7 +105,7 @@ public class OnboardingController {
             Label dash = new Label("—");
             Spinner<LocalTime> end   = makeTimeSpinner(LocalTime.of(8, 45));  // default 08:45
 
-            // simple visual validation: end must be after start
+            // row-level validation: end must be after start
             end.valueProperty().addListener((o, ov, nv) -> {
                 LocalTime s = start.getValue();
                 if (nv != null && s != null && !nv.isAfter(s)) {
@@ -115,9 +115,16 @@ public class OnboardingController {
                 }
             });
 
+            // real-time global overlap validation
+            start.valueProperty().addListener((o, ov, nv) -> validateNoOverlapStylesOnly());
+            end.valueProperty().addListener((o, ov, nv) -> validateNoOverlapStylesOnly());
+
             row.getChildren().addAll(lbl, start, dash, end);
             periodRows.getChildren().add(row);
         }
+
+        // run once to clear/mark initial state
+        validateNoOverlapStylesOnly();
     }
 
     private Spinner<LocalTime> makeTimeSpinner(LocalTime initial) {
@@ -160,6 +167,7 @@ public class OnboardingController {
         } else {
             spinner.getEditor().setStyle("-fx-background-color: #ffefef;");
         }
+        validateNoOverlapStylesOnly();
     }
 
     private int parsePositiveInt(String s, int fallback) {
@@ -170,6 +178,77 @@ public class OnboardingController {
             return fallback;
         }
     }
+
+    // === overlap helpers ===
+    @SuppressWarnings("unchecked")
+    private Spinner<LocalTime> getStartSpinner(HBox row) {
+        return (Spinner<LocalTime>) row.getChildren().get(1);
+    }
+    @SuppressWarnings("unchecked")
+    private Spinner<LocalTime> getEndSpinner(HBox row) {
+        return (Spinner<LocalTime>) row.getChildren().get(3);
+    }
+
+    /** Live validation: mark fields red if any overlap or end<=start */
+    private void validateNoOverlapStylesOnly() {
+        // clear styles
+        for (var n : periodRows.getChildren()) {
+            if (n instanceof HBox row) {
+                getStartSpinner(row).getEditor().setStyle(null);
+                getEndSpinner(row).getEditor().setStyle(null);
+            }
+        }
+        LocalTime lastEnd = null;
+        for (var n : periodRows.getChildren()) {
+            if (!(n instanceof HBox row)) continue;
+            LocalTime s = getStartSpinner(row).getValue();
+            LocalTime e = getEndSpinner(row).getValue();
+            if (s == null || e == null) continue;
+
+            // same-row check
+            if (!e.isAfter(s)) {
+                getStartSpinner(row).getEditor().setStyle("-fx-background-color:#ffefef;");
+                getEndSpinner(row).getEditor().setStyle("-fx-background-color:#ffefef;");
+            }
+            // overlap with previous row: require lastEnd <= s
+            if (lastEnd != null && s.isBefore(lastEnd)) {
+                getStartSpinner(row).getEditor().setStyle("-fx-background-color:#ffefef;");
+                int idx = periodRows.getChildren().indexOf(row);
+                if (idx > 0 && periodRows.getChildren().get(idx - 1) instanceof HBox prev) {
+                    getEndSpinner(prev).getEditor().setStyle("-fx-background-color:#ffefef;");
+                }
+            }
+            if (e != null) lastEnd = (lastEnd == null) ? e : (e.isAfter(lastEnd) ? e : lastEnd);
+        }
+    }
+
+    /** Strict check for save: shows a readable message + returns false on failure. */
+    private boolean validateNoOverlapAndExplain() {
+        LocalTime lastEnd = null;
+        int rowIndex = 0;
+        for (var n : periodRows.getChildren()) {
+            if (!(n instanceof HBox row)) continue;
+            rowIndex++;
+            LocalTime s = getStartSpinner(row).getValue();
+            LocalTime e = getEndSpinner(row).getValue();
+            if (s == null || e == null) {
+                showAlert("Period " + rowIndex + " has incomplete time settings.");
+                return false;
+            }
+            if (!e.isAfter(s)) {
+                showAlert("Period " + rowIndex + " must end after it starts.");
+                return false;
+            }
+            if (lastEnd != null && s.isBefore(lastEnd)) {
+                showAlert("Period " + (rowIndex - 1) + " overlaps with Period " + rowIndex +
+                        ". Please adjust so the previous period ends before or exactly when the next starts.");
+                return false;
+            }
+            lastEnd = e;
+        }
+        return true;
+    }
+
 
     // === save ===
     @FXML
@@ -188,32 +267,24 @@ public class OnboardingController {
                 return;
             }
 
+            // strict overlap validation before collecting
+            if (!validateNoOverlapAndExplain()) {
+                validateNoOverlapStylesOnly(); // refresh red hints
+                return;
+            }
+
             // Collect the daily template from spinners
             List<PeriodTime> template = new ArrayList<>();
             int periodNumber = 0;
 
             for (var node : periodRows.getChildren()) {
                 if (node instanceof HBox row) {
-                    var kids = row.getChildren();
-                    if (kids.size() >= 4
-                            && kids.get(1) instanceof Spinner
-                            && kids.get(3) instanceof Spinner) {
-
-                        @SuppressWarnings("unchecked")
-                        Spinner<LocalTime> sSpin = (Spinner<LocalTime>) kids.get(1);
-                        @SuppressWarnings("unchecked")
-                        Spinner<LocalTime> eSpin = (Spinner<LocalTime>) kids.get(3);
-                        LocalTime s = sSpin.getValue();
-                        LocalTime e = eSpin.getValue();
-
-                        if (s == null || e == null || !e.isAfter(s)) {
-                            showAlert("Please set valid times (end > start) for all periods.");
-                            return;
-                        }
-
-                        periodNumber++;
-                        template.add(new PeriodTime(periodNumber, s, e));
-                    }
+                    var sSpin = getStartSpinner(row);
+                    var eSpin = getEndSpinner(row);
+                    LocalTime s = sSpin.getValue();
+                    LocalTime e = eSpin.getValue();
+                    periodNumber++;
+                    template.add(new PeriodTime(periodNumber, s, e));
                 }
             }
 
@@ -233,7 +304,7 @@ public class OnboardingController {
 
             showAlert("Settings saved to:\n" + ConfigManager.settingsPath().toAbsolutePath());
 
-            // TODO: Navigate to your main UI
+            // TODO: Navigate to main UI
             // Navigator.loadMainPlaceholder();
 
         } catch (NumberFormatException ex) {

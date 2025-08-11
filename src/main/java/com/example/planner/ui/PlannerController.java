@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.File;
 
+
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -11,9 +12,14 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
+import java.util.List;
 import java.util.Locale;
 
 public class PlannerController {
@@ -41,31 +47,16 @@ public class PlannerController {
     @FXML
     private void initialize() throws IOException {
         //load data
-
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(new File("data/settings.json"));
         String displayName = jsonNode.get("displayName").asText();
         // Header text
-        greetingLabel.setText("Hi,"+displayName);
+        greetingLabel.setText("Hi, "+displayName);
         dateLabel.setText(humanDate(LocalDate.now()));
 
-        // Hook up buttons (stubs)
-        listBtn.setOnAction(e -> System.out.println("List view"));
-        matrixBtn.setOnAction(e -> System.out.println("Matrix view"));
-        calendarBtn.setOnAction(e -> System.out.println("Calendar view"));
-        helpBtn.setOnAction(e -> System.out.println("Help"));
 
-        addTaskBtn.setOnAction(e -> {
-            String t = quickTaskField.getText().trim();
-            if (!t.isEmpty()) {
-                addPendingTaskCard(false, t, "From " + humanDate(LocalDate.now()), "Quick task created from left bar.");
-                quickTaskField.clear();
-            }
-        });
 
-        addAttachmentBtn.setOnAction(e -> chooseAttachment());
-
-        // Demo: a few dynamic items you can remove later
+        // Demo
         addClassCard("Chinese Language & Literature", "Period 1 08:00–09:30");
         addClassCard("Math AA HL", "Period 2 09:45–10:15");
         addClassCard("English", "Period 3 10:20–12:15");
@@ -183,22 +174,8 @@ public class PlannerController {
         detailBodyLabel.setText(body);
     }
 
-    public void addAttachment(String fileName) {
-        HBox row = new HBox(8);
-        Button choose = new Button("Choose file");
-        Label name = new Label(fileName);
-        name.setWrapText(true);
-        row.getChildren().addAll(choose, name);
-        choose.setOnAction(e -> chooseAttachmentInto(row, name));
-        attachmentListVBox.getChildren().add(row);
-    }
 
     /* ========== Internals / stubs ========== */
-
-    private void chooseAttachment() {
-        File file = new FileChooser().showOpenDialog(addAttachmentBtn.getScene().getWindow());
-        if (file != null) addAttachment(file.getName());
-    }
 
     private void chooseAttachmentInto(Node containerRow, Label nameLabel) {
         File file = new FileChooser().showOpenDialog(containerRow.getScene().getWindow());
@@ -210,4 +187,34 @@ public class PlannerController {
         String mon = d.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
         return dow + " " + mon + " " + d.getDayOfMonth() + " " + d.getYear();
     }
+    //TODO: use better search algorithm
+    /**convert localdate to letter day using linear search
+     * @param d java LocalDate
+     * @return letter date*/
+    private char letterDate(LocalDate d){
+        char letter = '0';
+        List<String[]> data = readCSV("src/letter_day_calendar.csv");
+        for(String[] row:data){
+            if(row[0].equals(d.toString())){
+                letter = row[2].charAt(0);
+            }
+        }
+        return letter;
+    }
+    /** this method reads CSV that maps letter date to actual date*/
+    private List<String[]> readCSV(String file) {
+        List<String[]> allData = null;
+        try {
+            FileReader filereader = new FileReader(file);
+            CSVReader csvReader = new CSVReaderBuilder(filereader)
+                    .withSkipLines(1)
+                    .build();
+            allData = csvReader.readAll();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return allData;
+    }
+
 }

@@ -36,11 +36,10 @@ public class OnboardingController {
 
     // ===== step 2 =====
     @FXML
-    private TextField periodsPerDayField;
-    @FXML
     private TextField daysPerCycleField;
     @FXML
     private VBox periodRows; // each row: "Period n" [start]—[end]
+    private int periodPerDay = 0;
 
     // ===== step 3 =====
     @FXML
@@ -76,7 +75,7 @@ public class OnboardingController {
         hide(screenSchedule);
         hide(screenCourses);
 
-        periodsPerDayField.textProperty().addListener((o, a, b) -> rebuildTimeRows());
+        //periodsPerDayField.textProperty().addListener((o, a, b) -> rebuildTimeRows());
         rebuildTimeRows();
 
         if (finishBtn != null) finishBtn.setOnAction(e -> finish());
@@ -106,7 +105,7 @@ public class OnboardingController {
     @FXML
     private void goToCourses() {
         // validate basic numbers & times first
-        Integer periods = parsePositiveIntOrNull(periodsPerDayField.getText());
+        Integer periods = periodPerDay;
         Integer days = parsePositiveIntOrNull(daysPerCycleField.getText());
         if (periods == null || days == null || periods <= 0 || days <= 0) {
             showAlert("Please enter valid positive numbers for periods/day and days/cycle.");
@@ -130,6 +129,43 @@ public class OnboardingController {
         show(screenSchedule);
         hide(screenCourses);
     }
+    @FXML
+    private void addPeriod(){
+        periodPerDay = periodPerDay+1;
+        HBox row = new HBox(12);
+        row.setFillHeight(true);
+
+        Label lbl = new Label("Period " + (periodPerDay));
+        lbl.setMinWidth(90);
+
+        Spinner<LocalTime> start = makeTimeSpinner(LocalTime.of(8, 0));
+        Label dash = new Label("—");
+        Spinner<LocalTime> end = makeTimeSpinner(LocalTime.of(8, 45));
+
+        // row check
+        end.valueProperty().addListener((o, ov, nv) -> {
+            LocalTime s = start.getValue();
+            if (nv != null && s != null && !nv.isAfter(s)) {
+                end.getEditor().setStyle("-fx-background-color:#ffefef;");
+            } else end.getEditor().setStyle(null);
+        });
+
+        // global overlap, live
+        start.valueProperty().addListener((o, ov, nv) -> validateNoOverlapStylesOnly());
+        end.valueProperty().addListener((o, ov, nv) -> validateNoOverlapStylesOnly());
+
+        row.getChildren().addAll(lbl, start, dash, end);
+        periodRows.getChildren().add(row);
+        validateNoOverlapStylesOnly();
+    }
+    @FXML
+    private void deletePeriod(){
+        periodPerDay = periodPerDay-1;
+        int size = periodRows.getChildren().size();
+        if (size > 0) {
+            periodRows.getChildren().remove(size - 1);
+        }
+    }
 
     private void show(AnchorPane p) {
         p.setVisible(true);
@@ -147,12 +183,11 @@ public class OnboardingController {
 
     // ===== step 2: time rows =====
     private void rebuildTimeRows() {
-        int periods = parsePositiveInt(periodsPerDayField.getText(), 0);
+        int periods = periodPerDay;
         buildPeriodTimeTemplate(periods);
     }
 
     private void buildPeriodTimeTemplate(int periodsPerDay) {
-        periodRows.getChildren().clear();
         if (periodsPerDay <= 0) return;
 
         for (int p = 1; p <= periodsPerDay; p++) {
@@ -369,7 +404,7 @@ public class OnboardingController {
     }
 
     private List<List<String>> collectCourseMatrix() {
-        int periods = Integer.parseInt(periodsPerDayField.getText().trim());
+        int periods = periodPerDay;
         int days = Integer.parseInt(daysPerCycleField.getText().trim());
         List<List<String>> matrix = new ArrayList<>(days);
 
@@ -404,7 +439,7 @@ public class OnboardingController {
                 return;
             }
 
-            int periods = Integer.parseInt(safeTrim(periodsPerDayField.getText()));
+            int periods = periodPerDay;
             int days = Integer.parseInt(safeTrim(daysPerCycleField.getText()));
             if (periods <= 0 || days <= 0) {
                 showAlert("Periods/day and days/cycle must be positive.");

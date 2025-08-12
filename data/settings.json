@@ -1,0 +1,11 @@
+{
+  "displayName" : "Jeremy",
+  "periodsPerDay" : 1,
+  "daysPerCycle" : 1,
+  "periods" : [ {
+    "periodNumber" : 1,
+    "start" : [ 8, 0 ],
+    "end" : [ 8, 45 ]
+  } ],
+  "courseMatrix" : [ [ "Math" ] ]
+}

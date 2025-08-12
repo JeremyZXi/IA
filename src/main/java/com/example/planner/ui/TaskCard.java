@@ -83,7 +83,7 @@ public class TaskCard extends Button{
         applyCompletionStyle(t.isComplete());
     }
 
-    private void applyCompletionStyle(boolean completed) {
+    public void applyCompletionStyle(boolean completed) {
         if (completed) {
             setStyle("-fx-background-color:#f3f3f3; -fx-border-color:#cccccc; -fx-alignment:BASELINE_LEFT; -fx-padding:0 6 0 6;");
             titleLabel.setStyle("-fx-font-weight:bold; -fx-strikethrough:true; -fx-font-size:13px; -fx-text-fill:#666;");

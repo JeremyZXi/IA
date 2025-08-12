@@ -13,20 +13,16 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
-import javafx.scene.input.MouseEvent;
-import java.util.function.BiConsumer;
 
-import java.io.FileNotFoundException;
+import java.util.*;
+
 import java.io.FileReader;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import java.io.IOException;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.TextStyle;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 
 import com.example.planner.data.ConfigManager;
 import com.example.planner.model.PeriodTime;
@@ -59,6 +55,8 @@ public class PlannerController {
     private TaskList regularTasks;
     private  TaskList pendingTasks;
     private Task currentDetailTask;
+    //lookup table for detail
+    private final Map<Task, TaskCard> taskCardMap = new HashMap<>();
 
     @FXML
     private void initialize() throws Exception {
@@ -102,6 +100,24 @@ public class PlannerController {
         // Header text
         greetingLabel.setText("Hi, "+settings.getDisplayName());
         dateLabel.setText(humanDate(date));
+
+        //listen
+        detailDoneCheck.selectedProperty().addListener((obs, was, isNow) -> {
+            if (currentDetailTask != null) {
+                currentDetailTask.setComplete(isNow);
+                TaskCard card = taskCardMap.get(currentDetailTask);
+                System.out.println(isNow);
+                if (card != null) {
+                    card.applyCompletionStyle(isNow); // you'll need this method in TaskCard
+                    if (isNow) {
+                        // move completed card to bottom
+                        pendingListVBox.getChildren().remove(card);
+                        pendingListVBox.getChildren().add(card);
+                    }
+                }
+            }
+        });
+
     }
     @FXML
     public void addPendingTask(){
@@ -149,12 +165,9 @@ public class PlannerController {
 
     public void addPendingTaskCard(Task task) {
         TaskCard card = new TaskCard(task);
-        card.setOnOpen(() -> setDetail(
-                task.isComplete(),
-                task.getDueDate() != null ? task.getDueDate().toString() : "",
-                task.getName(),
-                (task.getDescription() != null ? task.getDescription() : "") + "\n\n(Opened from pending)")
-        );
+        taskCardMap.put(task, card);
+        card.setOnOpen(() -> setDetail(task));
+
         card.setOnPersist(t -> {
             // StorageManager.save(...); // your persistence
         });
@@ -167,16 +180,17 @@ public class PlannerController {
     }
 
 
-
     /** Update your model/storage when a pending task checkbox changes. */
 
 
-    public void setDetail(boolean completed, String meta, String title, String body) {
-        detailDoneCheck.setSelected(completed);
-        detailMetaLabel.setText(meta);
-        detailTitleLabel.setText(title);
-        detailBodyLabel.setText(body);
+    public void setDetail(Task task) {
+        this.currentDetailTask = task;
+        detailDoneCheck.setSelected(task.isComplete());
+        detailMetaLabel.setText(task.getDueDate() != null ? task.getDueDate().toString() : "");
+        detailTitleLabel.setText(task.getName());
+        detailBodyLabel.setText(task.getDescription() != null ? task.getDescription() : "");
     }
+
 
 
     /* ========== Internals / stubs ========== */

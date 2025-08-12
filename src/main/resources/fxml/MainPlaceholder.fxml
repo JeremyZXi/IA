@@ -147,7 +147,7 @@
 
     <!-- RIGHT: Task detail panel -->
     <right>
-        <BorderPane minWidth="320" prefWidth="360" style="-fx-background-color:white; -fx-border-color:#dddddd; -fx-border-width:0 0 0 1;">
+        <BorderPane minWidth="320" prefHeight="720.0" prefWidth="469.0" style="-fx-background-color:white; -fx-border-color:#dddddd; -fx-border-width:0 0 0 1;">
             <padding><Insets bottom="16" left="16" right="16" top="16" /></padding>
 
             <!-- Detail header -->
@@ -155,9 +155,9 @@
                 <VBox spacing="8">
                     <HBox alignment="CENTER_LEFT" spacing="8">
                         <CheckBox fx:id="detailDoneCheck" />
-                        <Label fx:id="detailMetaLabel" style="-fx-text-fill:#666;" text="Aug 11 2025 • Period 3 • English" />
+                        <Label fx:id="detailMetaLabel" style="-fx-text-fill:#666;" />
                     </HBox>
-                    <Label fx:id="detailTitleLabel" style="-fx-font-size:18px; -fx-font-weight:bold;" text="Anglophone culture presentation" />
+                    <Label fx:id="detailTitleLabel" style="-fx-font-size:18px; -fx-font-weight:bold;" />
                 </VBox>
             </top>
 
@@ -165,9 +165,7 @@
             <center>
                 <ScrollPane fitToWidth="true">
                     <content>
-                        <VBox fillWidth="true" spacing="10">
-                            <Label fx:id="detailBodyLabel" text="Select a task to see details here. The long text will scroll." wrapText="true" />
-                        </VBox>
+                        <VBox fx:id="detailPane" fillWidth="true" spacing="10" />
                     </content>
                 </ScrollPane>
             </center>

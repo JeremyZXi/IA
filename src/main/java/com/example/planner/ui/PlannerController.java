@@ -2,9 +2,6 @@ package com.example.planner.ui;
 
 import com.example.planner.data.StorageManager;
 import com.example.planner.model.*;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.io.File;
 
 
@@ -42,7 +39,7 @@ public class PlannerController {
 
     // Right (detail)
     @FXML private CheckBox detailDoneCheck;
-    @FXML private Label detailMetaLabel, detailTitleLabel, detailBodyLabel;
+    @FXML private Label detailMetaLabel, detailTitleLabel;
     @FXML private VBox attachmentListVBox;
     @FXML private Button addAttachmentBtn;
     //add task
@@ -50,12 +47,15 @@ public class PlannerController {
     @FXML private Button addTaskBtn;
     @FXML private TextField quickTaskField;
     @FXML private  TextArea taskDescription;
-
+    @FXML private VBox detailPane;
     private LocalDate date = LocalDate.parse("2025-08-10");//LocalDate.now();
     private TaskList regularTasks;
     private  TaskList pendingTasks;
     private Task currentDetailTask;
-    //lookup table for detail
+
+    private MdTextArea detailNote = new MdTextArea();
+
+    //lookup table for detail pane
     private final Map<Task, TaskCard> taskCardMap = new HashMap<>();
 
     @FXML
@@ -101,6 +101,7 @@ public class PlannerController {
         greetingLabel.setText("Hi, "+settings.getDisplayName());
         dateLabel.setText(humanDate(date));
 
+        detailPane.getChildren().add(detailNote);
         //listen
         detailDoneCheck.selectedProperty().addListener((obs, was, isNow) -> {
             if (currentDetailTask != null) {
@@ -117,6 +118,8 @@ public class PlannerController {
                 }
             }
         });
+
+
 
     }
     @FXML
@@ -153,7 +156,7 @@ public class PlannerController {
         HBox.setHgrow(card, Priority.ALWAYS);
 
         card.setOnAction(e -> {
-            // Example: change center header when a class is selected
+            // change center header when a class is selected
             setCenterHeader(title, subtitle);
             System.out.println("Selected class: " + title);
         });
@@ -168,8 +171,9 @@ public class PlannerController {
         taskCardMap.put(task, card);
         card.setOnOpen(() -> setDetail(task));
 
+
         card.setOnPersist(t -> {
-            // StorageManager.save(...); // your persistence
+            // StorageManager.save(...); // persistence storage
         });
         card.setOnMoveToBottom(() -> {
             pendingListVBox.getChildren().remove(card);
@@ -180,15 +184,24 @@ public class PlannerController {
     }
 
 
-    /** Update your model/storage when a pending task checkbox changes. */
-
+    private void saveCurrentDetail() {
+        if (currentDetailTask != null && detailNote.isDirty()) {
+            currentDetailTask.setDescription(detailNote.getText());
+            // TODO:persistant memory goes here
+            // StorageManager.saveTask(currentDetailTask);
+            detailNote.clearDirty();
+        }
+    }
 
     public void setDetail(Task task) {
+        saveCurrentDetail();
+
         this.currentDetailTask = task;
         detailDoneCheck.setSelected(task.isComplete());
         detailMetaLabel.setText(task.getDueDate() != null ? task.getDueDate().toString() : "");
         detailTitleLabel.setText(task.getName());
-        detailBodyLabel.setText(task.getDescription() != null ? task.getDescription() : "");
+        //detailBodyLabel.setText(task.getDescription() != null ? task.getDescription() : "");
+        detailNote.setInputSpace(task.getDescription() != null ? task.getDescription() : "");
     }
 
 

@@ -484,7 +484,9 @@ public class OnboardingController {
             ConfigManager.save(settings);
             showAlert("Settings saved to:\n" + ConfigManager.settingsPath().toAbsolutePath());
 
-
+            //build empty to-do list
+            MasterList masterList = new MasterList();
+            StorageManager.save(masterList);
 
             // TODO: navigate to main UI
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/MainPlaceholder.fxml"));

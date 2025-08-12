@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<fx:root type="Button" xmlns:fx="http://javafx.com/fxml" style="-fx-padding:6;">
+    <graphic>
+        <HBox spacing="8" styleClass="pending-card">
+            <children>
+                <CheckBox fx:id="checkBox"/>
+                <VBox spacing="2">
+                    <children>
+                        <Label fx:id="titleLabel" style="-fx-font-weight:bold; -fx-font-size:13px;"/>
+                        <Label fx:id="metaLabel"   style="-fx-text-fill:#3a6ea5; -fx-font-size:11px;"/>
+                        <Label fx:id="previewLabel" style="-fx-text-fill:#555; -fx-font-size:11px;"/>
+                    </children>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+            </children>
+        </HBox>
+    </graphic>
+</fx:root>

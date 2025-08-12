@@ -58,6 +58,8 @@ public class PlannerController {
     private LocalDate date = LocalDate.parse("2025-08-10");//LocalDate.now();
     private TaskList regularTasks;
     private  TaskList pendingTasks;
+    private Task currentDetailTask;
+
     @FXML
     private void initialize() throws Exception {
         //load data
@@ -143,116 +145,31 @@ public class PlannerController {
         classListVBox.getChildren().add(card);
     }
 
-    public void addTodayTaskCard(boolean checked, String title, String timeRange, String preview) {
-        HBox row = new HBox(10);
-        row.setStyle("-fx-background-color:white; -fx-border-color:#cccccc; -fx-padding:10;");
-        row.setMinHeight(72);
-
-        CheckBox cb = new CheckBox();
-        cb.setSelected(checked);
-
-        VBox text = new VBox(2);
-        Label tt = new Label(title);
-        tt.setStyle("-fx-font-weight:bold;");
-        Label tr = new Label(timeRange);
-        tr.setStyle("-fx-text-fill:#3a6ea5; -fx-font-size:12px;");
-        Label pv = new Label(preview);
-        pv.setWrapText(true);
-
-        text.getChildren().addAll(tt, tr, pv);
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Button open = new Button("Open");
-        open.setOnAction(e -> setDetail(cb.isSelected(), humanDate(date) + " • " + periodInfoLabel.getText(),
-                title, preview + "\n\n(Opened from center list)"));
-
-        row.getChildren().addAll(cb, text, spacer, open);
-        taskListVBox.getChildren().add(row);
-    }
 
 
     public void addPendingTaskCard(Task task) {
-        boolean checked = task.isComplete();
-        String title = task.getName();
-        String meta  = task.getDueDate() != null ? task.getDueDate().toString() : "";
-        String preview = task.getDescription() != null ? task.getDescription() : "";
-
-        // Compact preview (first 30 chars only)
-        String shortPreview = preview.length() > 30 ? preview.substring(0, 30) + "..." : preview;
-
-        // Content layout
-        HBox content = new HBox(8); // smaller spacing
-        content.setStyle("-fx-background-color:transparent; -fx-padding:6;");
-        content.setMinHeight(48); // smaller height
-
-        CheckBox cb = new CheckBox();
-        cb.setSelected(checked);
-
-        VBox text = new VBox(1); // tighter vertical spacing
-        Label tt = new Label(title);
-        tt.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
-        Label mm = new Label(meta);
-        mm.setStyle("-fx-text-fill:#3a6ea5; -fx-font-size:11px;");
-        Label pv = new Label(shortPreview);
-        pv.setStyle("-fx-text-fill:#555; -fx-font-size:11px;");
-        pv.setWrapText(false); // keep it single line
-        text.getChildren().addAll(tt, mm, pv);
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        content.getChildren().addAll(cb, text, spacer);
-
-        // Button as the card
-        Button card = new Button();
-        card.setGraphic(content);
-        card.setMaxWidth(Double.MAX_VALUE);
-        card.setMinHeight(48); // smaller height
-        card.setStyle("-fx-background-color:white; -fx-border-color:#cccccc; -fx-alignment:BASELINE_LEFT; -fx-padding:0 6 0 6;");
-        HBox.setHgrow(card, Priority.ALWAYS);
-
-        // Clicking the card opens details
-        card.setOnAction(e -> setDetail(
-                cb.isSelected(),
-                meta,
-                title,
-                preview + "\n\n(Opened from pending)")
+        TaskCard card = new TaskCard(task);
+        card.setOnOpen(() -> setDetail(
+                task.isComplete(),
+                task.getDueDate() != null ? task.getDueDate().toString() : "",
+                task.getName(),
+                (task.getDescription() != null ? task.getDescription() : "") + "\n\n(Opened from pending)")
         );
-
-        cb.addEventFilter(MouseEvent.MOUSE_PRESSED, evt -> {
-            boolean newVal = !cb.isSelected();
-            cb.setSelected(newVal);            // show it immediately
-            onPendingChecked(task, newVal);    // update the Task object you passed in
-            evt.consume();                     // don’t click the card button
+        card.setOnPersist(t -> {
+            // StorageManager.save(...); // your persistence
         });
-        cb.addEventFilter(MouseEvent.MOUSE_RELEASED, MouseEvent::consume);
-        cb.addEventFilter(MouseEvent.MOUSE_CLICKED, MouseEvent::consume);
-
-        // strike-through
-        cb.selectedProperty().addListener((o, ov, nv) -> {
-            tt.setStyle(nv ? "-fx-font-weight:bold; -fx-strikethrough:true; -fx-font-size:13px;"
-                    : "-fx-font-weight:bold; -fx-font-size:13px;");
+        card.setOnMoveToBottom(() -> {
+            pendingListVBox.getChildren().remove(card);
+            pendingListVBox.getChildren().add(card);
         });
-
 
         pendingListVBox.getChildren().add(card);
     }
 
 
+
     /** Update your model/storage when a pending task checkbox changes. */
-    private void onPendingChecked(Task task, boolean checked) {
-        task.setComplete(checked);
-        // If you want to persist immediately, do it here (adjust to your structures):
-        try {
-            task.setComplete(checked);
-            pendingListVBox.getChildren().remove(task);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            // optionally show an Alert
-        }
-    }
+
 
     public void setDetail(boolean completed, String meta, String title, String body) {
         detailDoneCheck.setSelected(completed);

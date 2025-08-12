@@ -1,6 +1,8 @@
 package com.example.planner.ui;
 
 import com.example.planner.data.ConfigManager;
+import com.example.planner.data.StorageManager;
+import com.example.planner.model.MasterList;
 import com.example.planner.model.PeriodTime;
 import com.example.planner.model.UserSettings;
 import javafx.fxml.FXML;
@@ -478,14 +480,11 @@ public class OnboardingController {
             settings.setDaysPerCycle(days);
             settings.setPeriodsPerDay(periods);
             settings.setPeriods(template);
-
-
-
             settings.getClass().getMethod("setCourseMatrix", List.class).invoke(settings, courseMatrix);
-
-
             ConfigManager.save(settings);
             showAlert("Settings saved to:\n" + ConfigManager.settingsPath().toAbsolutePath());
+
+
 
             // TODO: navigate to main UI
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/MainPlaceholder.fxml"));

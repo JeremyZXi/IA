@@ -1,23 +1,29 @@
 package com.example.planner.model;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import com.example.planner.model.Course;
 
 public class Task {
+    private Course course;
+    private boolean complete = false;
     private String name;
     private String description;
-    private LocalTime dueDate;
-    private Course parent;
+    private LocalDate dueDate;
     private double priority;
 
-    public Task(String name, String description, LocalTime dueDate, Course parent, double priority) {
+    public Task(String name, String description, LocalDate dueDate) {
         this.name = name;
         this.description = description;
         this.dueDate = dueDate;
-        this.priority = priority;
-        this.parent = parent;
+    }
+    public boolean isComplete() {
+        return complete;
     }
 
+    public void setComplete(boolean complete) {
+        this.complete = complete;
+    }
     public String getName() {
         return name;
     }
@@ -34,21 +40,19 @@ public class Task {
         this.description = description;
     }
 
-    public LocalTime getDueDate() {
+    public LocalDate getDueDate() {
         return dueDate;
     }
 
-    public void setDueDate(LocalTime dueDate) {
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
     }
 
-    public Course getParent() {
-        return parent;
-    }
 
-    public void setParent(Course parent) {
-        this.parent = parent;
-    }
 
     public double getPriority() {
         return priority;

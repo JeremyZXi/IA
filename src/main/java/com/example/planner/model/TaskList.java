@@ -4,30 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TaskList {
-    private Course course;
-    private LocalDate dueDate;
+    private LocalDate date;
     private List<Task> taskList = new ArrayList();
 
-    public TaskList(Course course, LocalDate dueDate) {
-        this.course = course;
-        this.dueDate = dueDate;
+    public TaskList() {
+
     }
 
-    public Course getCourse() {
-        return course;
-    }
 
-    public void setCourse(Course course) {
-        this.course = course;
-    }
-
-    public LocalDate getDueDate() {
-        return dueDate;
-    }
-
-    public void setDueDate(LocalDate dueDate) {
-        this.dueDate = dueDate;
-    }
 
     public List<Task> getTaskList() {
         return taskList;

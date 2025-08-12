@@ -60,27 +60,33 @@
                      <children>
                         <VBox prefHeight="200.0" prefWidth="100.0">
                            <children>
-                                   <Button fx:id="addTaskBtn" contentDisplay="CENTER" prefHeight="26.0" prefWidth="99.0" text="+ Add Task" />
-                              <DatePicker promptText="due date">
+                                   <Button fx:id="addTaskBtn" contentDisplay="CENTER" onAction="#addPendingTask" prefHeight="26.0" prefWidth="99.0" text="+ Add Task" />
+                              <DatePicker fx:id="picker">
                                  <VBox.margin>
                                     <Insets top="5.0" />
                                  </VBox.margin>
                               </DatePicker>
-                              <ScrollPane prefHeight="206.0" prefWidth="97.0">
-                                 <VBox.margin>
-                                    <Insets top="5.0" />
-                                 </VBox.margin>
-                              </ScrollPane>
+                                       <Label fx:id="letterDayLabel" />
+                                       <Label fx:id="courseTodayLabel" />
+
+
+
+
                            </children>
                         </VBox>
                         <VBox prefHeight="200.0" prefWidth="146.0">
                            <children>
                                    <TextField fx:id="quickTaskField" promptText="(optional) quick title..." />
-                              <TextArea prefHeight="98.0" prefWidth="143.0">
+                              <TextArea fx:id="taskDescription" prefHeight="211.0" prefWidth="143.0">
                                  <VBox.margin>
                                     <Insets top="5.0" />
                                  </VBox.margin>
                               </TextArea>
+                              <ScrollPane prefHeight="206.0" prefWidth="97.0">
+                                 <VBox.margin>
+                                    <Insets top="5.0" />
+                                 </VBox.margin>
+                              </ScrollPane>
                            </children>
                         </VBox>
                      </children>

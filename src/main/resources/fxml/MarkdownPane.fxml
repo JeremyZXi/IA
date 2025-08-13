@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.web.WebView?>
+
+<fx:root type="SplitPane"
+         xmlns="http://javafx.com/javafx/21"
+         xmlns:fx="http://javafx.com/fxml/1"
+         dividerPositions="0.45">
+    <items>
+        <AnchorPane>
+            <children>
+                <TextArea fx:id="inputSpace"
+                          AnchorPane.topAnchor="0.0"
+                          AnchorPane.rightAnchor="0.0"
+                          AnchorPane.bottomAnchor="0.0"
+                          AnchorPane.leftAnchor="0.0"/>
+            </children>
+        </AnchorPane>
+
+        <AnchorPane>
+            <children>
+                <WebView fx:id="displaySpace"
+                         AnchorPane.topAnchor="0.0"
+                         AnchorPane.rightAnchor="0.0"
+                         AnchorPane.bottomAnchor="0.0"
+                         AnchorPane.leftAnchor="0.0"/>
+            </children>
+        </AnchorPane>
+    </items>
+</fx:root>

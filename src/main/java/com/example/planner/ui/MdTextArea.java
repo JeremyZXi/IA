@@ -13,6 +13,7 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -61,10 +62,21 @@ public class MdTextArea extends SplitPane {
             content = newVal;
             Node document = parser.parse(newVal == null ? "" : newVal);
             String html = renderer.render(document);
-
-            webEngine.loadContent(html, "text/html");
+            webEngine.loadContent(wrapWithStyle(html), "text/html");
         });
     }
+    private String wrapWithStyle(String bodyHtml) {
+        String cssUrl = Objects.requireNonNull(
+                getClass().getResource("/css/swiss.css")
+        ).toExternalForm();
+
+        return """
+        <!doctype html><html><head><meta charset="utf-8">
+        <link rel="stylesheet" href="%s">
+        </head><body>%s</body></html>
+        """.formatted(cssUrl, bodyHtml);
+    }
+
 
     public void setInputSpace(String inputText) {
         this.inputSpace.setText(inputText);

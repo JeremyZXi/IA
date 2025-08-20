@@ -1,32 +1,25 @@
 package com.example.planner.ui;
 
-import com.example.planner.data.StorageManager;
+import com.example.planner.data.ConfigManager;
 import com.example.planner.data.UserDataManager;
 import com.example.planner.model.*;
-
-import java.io.File;
-import java.awt.Toolkit;
-
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
-import java.util.*;
-
+import java.io.File;
 import java.io.FileReader;
-
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.TextStyle;
-
-import com.example.planner.data.ConfigManager;
-import com.example.planner.model.PeriodTime;
+import java.util.*;
 
 public class PlannerController {
 
@@ -61,8 +54,7 @@ public class PlannerController {
     @FXML
     private CustomDatePicker datePicker = new CustomDatePicker();
 
-    @FXML
-    private Button addTaskBtn;
+
     @FXML
     private TextField quickTaskField;
     @FXML
@@ -83,8 +75,6 @@ public class PlannerController {
     private CustomDatePicker dateFilter = new CustomDatePicker();
     @FXML
     private VBox classListVBox;
-    @FXML
-    private Button inboxBtn;
 
     private LocalDate date = LocalDate.now(); //LocalDate.parse("2025-08-10");//LocalDate.now();
     private TaskList regularTasks;

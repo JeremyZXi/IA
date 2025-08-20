@@ -11,6 +11,8 @@ public class Course {
         this.courseLetterDate=courseLetterDate;
         this.periodTime = periodTime;
     }
+    /** for jackson*/
+    public Course(){}
     public String getCourseName(){
         return  courseName;
     }

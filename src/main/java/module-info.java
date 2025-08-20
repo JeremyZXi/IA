@@ -7,8 +7,12 @@ module com.example.planner {
     requires opencsv;
     requires javafx.markdown.preview.all;
     requires javafx.web;
+    requires java.desktop;
 
     opens com.example.planner.ui to javafx.fxml; // for FXML controller reflection
+
+    opens com.example.planner.model to com.fasterxml.jackson.databind;
+
     exports com.example.planner;
     exports com.example.planner.data;
     exports com.example.planner.model;

@@ -7,9 +7,8 @@ public class TaskList {
     private LocalDate date;
     private List<Task> taskList = new ArrayList();
 
-    public TaskList() {
-
-    }
+    /**Constructor and for jackson*/
+    public TaskList() {}
 
 
 

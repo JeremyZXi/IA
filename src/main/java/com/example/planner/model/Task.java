@@ -12,11 +12,22 @@ public class Task {
     private LocalDate dueDate;
     private double priority;
 
+
     public Task(String name, String description, LocalDate dueDate) {
         this.name = name;
         this.description = description;
         this.dueDate = dueDate;
     }
+    /**For jackson*/
+    public Task(){}
+
+    public Task(String name, String description, LocalDate dueDate,Course course) {
+        this.name = name;
+        this.description = description;
+        this.dueDate = dueDate;
+        this.course = course;
+    }
+
     public boolean isComplete() {
         return complete;
     }

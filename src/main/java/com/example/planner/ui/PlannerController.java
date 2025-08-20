@@ -1,13 +1,15 @@
 package com.example.planner.ui;
 
 import com.example.planner.data.StorageManager;
+import com.example.planner.data.UserDataManager;
 import com.example.planner.model.*;
 
 import java.io.File;
-
+import java.awt.Toolkit;
 
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -43,7 +45,8 @@ public class PlannerController {
     @FXML
     private Button autoPlanBtn;
     @FXML
-    private VBox taskListVBox, pendingListVBox;
+    private VBox taskListVBox, pendingListVBox,completedTaskVBox;
+
 
     // Right (detail)
     @FXML
@@ -80,8 +83,10 @@ public class PlannerController {
     private CustomDatePicker dateFilter = new CustomDatePicker();
     @FXML
     private VBox classListVBox;
+    @FXML
+    private Button inboxBtn;
 
-    private LocalDate date = LocalDate.parse("2025-08-10");//LocalDate.now();
+    private LocalDate date = LocalDate.now(); //LocalDate.parse("2025-08-10");//LocalDate.now();
     private TaskList regularTasks;
     private TaskList pendingTasks;
     private Task currentDetailTask;
@@ -91,6 +96,10 @@ public class PlannerController {
     //lookup table for detail pane
     private final Map<Task, TaskCard> taskCardMap = new HashMap<>();
 
+    // Where each task was before it was moved to "completed" lookup table
+    private final Map<Task, VBox> previousContainer = new HashMap<>();
+
+
     @FXML
     private void initialize() throws Exception {
         //load data
@@ -99,6 +108,20 @@ public class PlannerController {
         int daysPerCycle = settings.getDaysPerCycle();
         List<List<String>> courseMatrix = settings.getCourseMatrix();
         List<PeriodTime> periodTimes = settings.getPeriods();
+
+        MasterList userData;
+        if (UserDataManager.dataExists()){
+            userData = UserDataManager.load();
+        } else {
+            MasterList newMaster = new MasterList();
+            newMaster.addTaskList(new TaskList());
+            newMaster.addTaskList(new TaskList());
+            UserDataManager.save(newMaster);
+            userData = UserDataManager.load();
+        }
+
+        regularTasks = userData.getMaster().get(0);
+        pendingTasks = userData.getMaster().get(1);
 
         //load course matrix
         List<List<Course>> schedule = new ArrayList<>();
@@ -114,15 +137,7 @@ public class PlannerController {
 
         setCourseList(date,classListVBox,schedule);
 
-        if (StorageManager.storageExists()) {
-            //TODO:should create a new manager for pending task or somehow combine them
-            regularTasks = new TaskList();
-            pendingTasks = new TaskList();
 
-        } else {
-            regularTasks = new TaskList();
-            pendingTasks = new TaskList();
-        }
 
         // Header text
         greetingLabel.setText("Hi, " + settings.getDisplayName());
@@ -132,20 +147,32 @@ public class PlannerController {
 
         //listen
         detailDoneCheck.selectedProperty().addListener((obs, was, isNow) -> {
-            if (currentDetailTask != null) {
-                currentDetailTask.setComplete(isNow);
-                TaskCard card = taskCardMap.get(currentDetailTask);
-                System.out.println(isNow);
-                if (card != null) {
-                    card.applyCompletionStyle(isNow);
-                    if (isNow) {
-                        // move completed card to bottom
-                        pendingListVBox.getChildren().remove(card);
-                        pendingListVBox.getChildren().add(card);
-                    }
+            if (currentDetailTask == null) return;
+
+            currentDetailTask.setComplete(isNow);
+            TaskCard card = taskCardMap.get(currentDetailTask);
+            if (card == null) return;
+
+            card.applyCompletionStyle(isNow);
+
+            Parent parent = card.getParent();
+            if (isNow) {
+                // store current container to the hashmap, then move to completed
+                if (parent instanceof VBox vbox) {
+                    previousContainer.put(currentDetailTask, vbox);
+                    vbox.getChildren().remove(card);
                 }
+                completedTaskVBox.getChildren().add(card);
+            } else {
+                // restore task to where it was
+                VBox dest = previousContainer.getOrDefault(currentDetailTask, taskListVBox);
+                if (parent instanceof VBox vbox) {
+                    vbox.getChildren().remove(card);
+                }
+                dest.getChildren().add(card);
             }
         });
+
 
         //display letter date
         datePicker.setAnnotationProvider(day ->
@@ -156,13 +183,13 @@ public class PlannerController {
         //listen to date change and display corresponding courses
         datePicker.valueProperty().addListener((observable, oldValue, newValue) -> {
             List<Course> avalibleOption = new ArrayList<>();
-
+            selectedCourse = null;//reset selected course
+            selectedCourseDisplay.setText("");
             if (letterDate(newValue) != '0') {
                 avalibleOption = schedule.get(letterDate2Index(letterDate(newValue)));
             }else {
                 avalibleOption.add(new Course("Break", '0', new PeriodTime(0, LocalTime.parse("00:00"), LocalTime.parse("23:59"))));
             }
-            //TODO: 每次改变date的时候要刷新，而不是直接往上加
             courseOption.getChildren().clear(); //clear all the existing display
             for (Course course : avalibleOption) {
                 addClassCard(course,courseOption,true);
@@ -180,21 +207,64 @@ public class PlannerController {
             //TODO:dynamically change the course display according to the date picked
             setCourseList(newValue,classListVBox,schedule);
         });
+        displayInbox();
 
 
+
+    }
+    public void shutdown() throws Exception {
+        System.out.println("closed");
+        MasterList userData = new MasterList();
+        userData.addTaskList(regularTasks);
+        userData.addTaskList(pendingTasks);
+        UserDataManager.save(userData);
     }
 
     @FXML
-    public void addPendingTask() {
-        if (selectedCourse == null){
+    public void addTask() {
         String name = quickTaskField.getText();
         String description = taskDescription.getText();
         LocalDate dueDate = datePicker.getValue();
-        Task task = new Task(name, description, dueDate);
-        pendingTasks.addTask(task);
-        addPendingTaskCard(task);
+
+        if (selectedCourse == null) {
+            regularTasks.addTask(new Task(name, description, dueDate));
+        } else {
+            regularTasks.addTask(new Task(name, description, dueDate, selectedCourse));
+        }
+
+        // refresh the currently visible view
+        refreshVisibleTasks();
+
+        // clear inputs
+        quickTaskField.clear();
+        taskDescription.clear();
+        datePicker.setValue(null);
+        selectedCourse = null;
+        selectedCourseDisplay.setText("");
+    }
+
+    @FXML
+    public void displayInbox() {
+        taskListVBox.getChildren().clear();
+        pendingListVBox.getChildren().clear();
+        completedTaskVBox.getChildren().clear();
+
+        subjectTitleLabel.setText("Inbox");
+        periodInfoLabel.setText("All your tasks");
+
+        for (Task task : regularTasks.getTaskList()) {
+            if (!task.isComplete()) {
+                if (task.getDueDate() != null && date.isAfter(task.getDueDate())) {
+                    addTaskCard(task, pendingListVBox);
+                } else {
+                    addTaskCard(task, taskListVBox);
+                }
+            } else {
+                addTaskCard(task, completedTaskVBox);
+            }
         }
     }
+
 
     /* ========== Public helpers to add dynamic content ========== */
 
@@ -240,8 +310,21 @@ public class PlannerController {
         if(!isLable){
         card.setOnAction(e -> {
             // change center header when a class is selected
+            taskListVBox.getChildren().clear();
+            completedTaskVBox.getChildren().clear();
+
             setCenterHeader(title, subtitle);
             System.out.println("Selected class: " + title);
+            for(Task task:regularTasks.getTaskList()){
+                if(task.getCourse().getCourseName().equals(title)){
+                    if(!task.isComplete()){
+                        addTaskCard(task,taskListVBox);
+                    } else {
+                        addTaskCard(task,completedTaskVBox);
+                    }
+                }
+            }
+
         });
         }else {
             card.setOnAction(e -> {
@@ -255,26 +338,39 @@ public class PlannerController {
 
 
 
-    public void addPendingTaskCard(Task task) {
+    public void addTaskCard(Task task, VBox target) {
         TaskCard card = new TaskCard(task);
         taskCardMap.put(task, card);
         card.setOnOpen(() -> setDetail(task));
 
-        card.setOnPersist(t -> {
-            // StorageManager.save(...); // persistence storage
-        });
+        // move to completed save where it came from
         card.setOnMoveToBottom(() -> {
-            pendingListVBox.getChildren().remove(card);
-            pendingListVBox.getChildren().add(card);
+            Parent p = card.getParent();
+            if (p instanceof VBox vbox) {
+                previousContainer.put(task, vbox);
+                vbox.getChildren().remove(card);
+            }
+            completedTaskVBox.getChildren().add(card);
         });
 
-        pendingListVBox.getChildren().add(card);
+        // restore from completed to its previous container
+        card.setOnRestore(() -> {
+            Parent p = card.getParent();
+            if (p instanceof VBox vbox) vbox.getChildren().remove(card);
+            VBox dest = previousContainer.getOrDefault(task, target);
+            dest.getChildren().add(card);
+        });
+
+        target.getChildren().add(card);
     }
+
+
 
 
     private void saveCurrentDetail() {
         if (currentDetailTask != null && detailNote.isDirty()) {
             currentDetailTask.setDescription(detailNote.getText());
+            taskCardMap.get(currentDetailTask).setTask(currentDetailTask);
             // TODO:persistant memory goes here
             // StorageManager.saveTask(currentDetailTask);
             detailNote.clearDirty();
@@ -286,11 +382,36 @@ public class PlannerController {
 
         this.currentDetailTask = task;
         detailDoneCheck.setSelected(task.isComplete());
-        detailMetaLabel.setText(task.getDueDate() != null ? task.getDueDate().toString() : "");
+        detailMetaLabel.setText(task.getDueDate() != null ? task.getDueDate().toString()+" | "+task.getCourse().getCourseName()+" Period "+task.getCourse().getPeriodTime().getPeriodNumber()+" | "+task.getCourse().getPeriodTime().getStart().toString()+"~"+task.getCourse().getPeriodTime().getEnd().toString(): "");
         detailTitleLabel.setText(task.getName());
         //detailBodyLabel.setText(task.getDescription() != null ? task.getDescription() : "");
         detailNote.setInputSpace(task.getDescription() != null ? task.getDescription() : "");
     }
+
+    private boolean isInboxView() {
+        return "Inbox".equals(subjectTitleLabel.getText());
+    }
+
+    private void refreshVisibleTasks() {
+        if (isInboxView()) {
+            displayInbox();
+            return;
+        }
+        String currentCourse = subjectTitleLabel.getText();
+        taskListVBox.getChildren().clear();
+        completedTaskVBox.getChildren().clear();
+
+        for (Task t : regularTasks.getTaskList()) {
+            if (t.getCourse() != null && currentCourse.equals(t.getCourse().getCourseName())) {
+                if (!t.isComplete()) {
+                    addTaskCard(t, taskListVBox);
+                } else {
+                    addTaskCard(t, completedTaskVBox);
+                }
+            }
+        }
+    }
+
 
 
 

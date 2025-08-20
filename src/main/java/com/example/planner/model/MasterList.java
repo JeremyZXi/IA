@@ -3,14 +3,21 @@ import java.util.ArrayList;
 import java.util.List;
 public class MasterList {
     private List<TaskList> master = new ArrayList();
+    /**constructor and for jackson*/
+    public MasterList(){
+    }
 
-    public void addDay(TaskList day){
-        this.master.add(day);
+    public List<TaskList> getMaster() {
+        return master;
     }
-    public void removeDay(TaskList day){
-        this.master.remove(day);
+
+    public void addTaskList(TaskList taskList){
+        this.master.add(taskList);
     }
-    public void removeDay(int index){
+    public void removeTaskList(TaskList taskList){
+        this.master.remove(taskList);
+    }
+    public void removeTaskList(int index){
         this.master.remove(index);
     }
 }

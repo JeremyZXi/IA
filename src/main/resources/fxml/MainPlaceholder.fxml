@@ -8,7 +8,9 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
@@ -59,13 +61,13 @@
                      <children>
                         <VBox fx:id="dateBox" prefHeight="200.0" prefWidth="100.0">
                            <children>
-                                   <Button fx:id="addTaskBtn" contentDisplay="CENTER" onAction="#addPendingTask" prefHeight="26.0" prefWidth="99.0" text="+ Add Task">
+                                   <Button fx:id="addTaskBtn" contentDisplay="CENTER" onAction="#addTask" prefHeight="26.0" prefWidth="99.0" text="+ Add Task">
                                  <VBox.margin>
                                     <Insets bottom="5.0" />
                                  </VBox.margin></Button>
                               <ScrollPane prefHeight="200.0" prefWidth="200.0">
                                  <content>
-                                    <VBox fx:id="courseOption" prefHeight="200.0" prefWidth="100.0" />
+                                    <VBox fx:id="courseOption" prefHeight="177.0" prefWidth="100.0" />
                                  </content>
                               </ScrollPane>
 
@@ -77,7 +79,7 @@
                         <VBox prefHeight="200.0" prefWidth="146.0">
                            <children>
                                    <TextField fx:id="quickTaskField" promptText="(optional) quick title..." />
-                              <TextArea fx:id="taskDescription" prefHeight="211.0" prefWidth="143.0">
+                              <TextArea fx:id="taskDescription" prefHeight="188.0" prefWidth="143.0">
                                  <VBox.margin>
                                     <Insets top="5.0" />
                                  </VBox.margin>
@@ -91,7 +93,7 @@
             </VBox>
             <HBox fx:id="filterHBox" prefHeight="100.0" prefWidth="200.0">
                <children>
-                  <Button mnemonicParsing="false" prefHeight="26.0" prefWidth="103.0" text="Inbox" />
+                  <Button fx:id="inboxBtn" mnemonicParsing="false" onAction="#displayInbox" prefHeight="26.0" prefWidth="103.0" text="Inbox" />
                </children>
             </HBox>
 
@@ -122,20 +124,24 @@
             </HBox>
 
             <!-- Today task cards list -->
-            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
-                <content>
-                    <VBox fx:id="taskListVBox" fillWidth="true" spacing="10">
+            <ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="400.0" prefHeight="400.0" prefWidth="347.0" VBox.vgrow="ALWAYS">
+            <content>
+               <VBox prefHeight="279.0" prefWidth="345.0">
+                  <children>
+                          <VBox fx:id="taskListVBox" fillWidth="true" spacing="10">
                         <!-- dynamic task cards injected from controller -->
                     </VBox>
-                </content>
+                  </children>
+               </VBox>
+            </content>
             </ScrollPane>
 
-            <Separator />
+            <Separator prefHeight="0.0" prefWidth="347.0" />
 
             <!-- Pending tasks section -->
             <Label style="-fx-font-size:16px; -fx-font-weight:bold;" text="Pending Tasks" />
             <VBox>
-                <ScrollPane fitToWidth="true" prefHeight="180">
+                <ScrollPane fitToWidth="true" prefHeight="234.0" prefWidth="347.0">
                     <content>
                         <VBox fx:id="pendingListVBox" fillWidth="true" spacing="10">
                             <!-- dynamic pending task cards -->
@@ -143,6 +149,24 @@
                     </content>
                 </ScrollPane>
             </VBox>
+         <Separator prefHeight="0.0" prefWidth="347.0" />
+         <VBox>
+            <children>
+               <TitledPane animated="false" text="completed">
+                 <content>
+                   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="370.0" prefWidth="345.0">
+                        <children>
+                           <ScrollPane fitToWidth="true" prefHeight="212.0" prefWidth="347.0">
+                              <content>
+                                 <VBox fx:id="completedTaskVBox" fillWidth="true" spacing="10" />
+                              </content>
+                           </ScrollPane>
+                        </children>
+                     </AnchorPane>
+                 </content>
+               </TitledPane>
+            </children>
+         </VBox>
         </VBox>
     </center>
 

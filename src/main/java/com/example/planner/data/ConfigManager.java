@@ -10,7 +10,7 @@ import java.nio.file.Path;
 
 public class ConfigManager {
     // Saves to <project-root>/data/settings.json
-    private static final Path DIR  = Path.of(System.getProperty("user.dir"), "data");
+    private static final Path DIR = Path.of(System.getProperty("user.dir"), "data");
     private static final Path FILE = DIR.resolve("settings.json");
 
     private static final ObjectMapper MAPPER =
@@ -29,5 +29,7 @@ public class ConfigManager {
         return MAPPER.readValue(FILE.toFile(), UserSettings.class);
     }
 
-    public static Path settingsPath() { return FILE; }
+    public static Path settingsPath() {
+        return FILE;
+    }
 }

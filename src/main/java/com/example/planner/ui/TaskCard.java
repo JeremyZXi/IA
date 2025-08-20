@@ -15,10 +15,14 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 public class TaskCard extends Button {
-    @FXML private CheckBox checkBox;
-    @FXML private Label titleLabel;
-    @FXML private Label metaLabel;
-    @FXML private Label previewLabel;
+    @FXML
+    private CheckBox checkBox;
+    @FXML
+    private Label titleLabel;
+    @FXML
+    private Label metaLabel;
+    @FXML
+    private Label previewLabel;
 
     private final ObjectProperty<Task> task = new SimpleObjectProperty<>();
     private Runnable onOpen;
@@ -73,17 +77,34 @@ public class TaskCard extends Button {
         checkBox.addEventFilter(MouseEvent.MOUSE_CLICKED, MouseEvent::consume);
     }
 
-    public Task getTask() { return task.get(); }
+    public Task getTask() {
+        return task.get();
+    }
+
     public void setTask(Task t) {
         task.set(t);
         refreshFromTask();
     }
-    public ObjectProperty<Task> taskProperty() { return task; }
 
-    public void setOnOpen(Runnable onOpen) { this.onOpen = onOpen; }
-    public void setOnRestore(Runnable r) { this.onRestore = r; }
-    public void setOnPersist(Consumer<Task> onPersist) { this.onPersist = onPersist; }
-    public void setOnMoveToBottom(Runnable onMoveToBottom) { this.onMoveToBottom = onMoveToBottom; }
+    public ObjectProperty<Task> taskProperty() {
+        return task;
+    }
+
+    public void setOnOpen(Runnable onOpen) {
+        this.onOpen = onOpen;
+    }
+
+    public void setOnRestore(Runnable r) {
+        this.onRestore = r;
+    }
+
+    public void setOnPersist(Consumer<Task> onPersist) {
+        this.onPersist = onPersist;
+    }
+
+    public void setOnMoveToBottom(Runnable onMoveToBottom) {
+        this.onMoveToBottom = onMoveToBottom;
+    }
 
     private void refreshFromTask() {
         Task t = getTask();
@@ -92,9 +113,9 @@ public class TaskCard extends Button {
         titleLabel.setText(nullToEmpty(t.getName()));
 
         String metaText = "";
-        if (t.getDueDate() != null){
+        if (t.getDueDate() != null) {
             metaText = t.getDueDate().toString();
-            if (t.getCourse() != null){
+            if (t.getCourse() != null) {
                 metaText = metaText + " | " + t.getCourse().getCourseName() + " " +
                         "Period " + t.getCourse().getPeriodTime().getPeriodNumber();
             }
@@ -131,5 +152,7 @@ public class TaskCard extends Button {
         }
     }
 
-    private static String nullToEmpty(String s) { return s == null ? "" : s; }
+    private static String nullToEmpty(String s) {
+        return s == null ? "" : s;
+    }
 }

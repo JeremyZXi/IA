@@ -1,13 +1,13 @@
 package com.example.planner.ui;
 
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.DateCell;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.StackPane;
-import javafx.geometry.Pos;
-import javafx.geometry.Insets;
-import javafx.scene.Node;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -29,6 +29,7 @@ public class CustomDatePicker extends DatePicker {
             this.tooltip = tooltip;
             this.styleClass = styleClass;
         }
+
         public Annotation(String badgeText) {
             this.badgeText = badgeText;
             this.tooltip = "";
@@ -38,7 +39,8 @@ public class CustomDatePicker extends DatePicker {
         public static Annotation of(String badgeText, String tooltip) {
             return new Annotation(badgeText, tooltip, null);
         }
-        public String getBadge(){
+
+        public String getBadge() {
             return this.badgeText;
         }
     }

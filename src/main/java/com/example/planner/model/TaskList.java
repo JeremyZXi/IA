@@ -1,4 +1,5 @@
 package com.example.planner.model;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,9 +8,11 @@ public class TaskList {
     private LocalDate date;
     private List<Task> taskList = new ArrayList();
 
-    /**Constructor and for jackson*/
-    public TaskList() {}
-
+    /**
+     * Constructor and for jackson
+     */
+    public TaskList() {
+    }
 
 
     public List<Task> getTaskList() {
@@ -19,10 +22,12 @@ public class TaskList {
     public void setTaskList(List<Task> taskList) {
         this.taskList = taskList;
     }
-    public void addTask(Task task){
+
+    public void addTask(Task task) {
         this.taskList.add(task);
     }
-    public void removeTask(int index){
+
+    public void removeTask(int index) {
         this.taskList.remove(index);
     }
 }

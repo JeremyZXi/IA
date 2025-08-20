@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!-- 小按钮作为触发器；点击后弹出一个固定大小的下拉面板 -->
+<fx:root type="MenuButton"
+         xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1"
+         text=""  mnemonicParsing="false"
+         style="-fx-padding: 4 8; -fx-background-radius: 8; -fx-min-width: 28; -fx-min-height: 28; -fx-pref-width: 28; -fx-pref-height: 28;">
+    <!-- 也可以用 graphic 放一个图标，示例用一个简单的“⋯” -->
+    <graphic>
+        <Label text="⋯" style="-fx-font-size: 14px; -fx-font-weight: bold;" />
+    </graphic>
+
+    <items>
+        <!-- 关键：用 CustomMenuItem 包住你的 VBox，且 hideOnClick=false 才能当面板用 -->
+        <CustomMenuItem hideOnClick="false">
+            <content>
+                <!-- 固定下拉面板尺寸：pref = max，按钮大小不会影响这里 -->
+                <VBox prefWidth="280.0" prefHeight="360.0"
+                      maxWidth="280.0" maxHeight="360.0"
+                      spacing="8">
+                    <padding>
+                        <Insets topRightBottomLeft="10" />
+                    </padding>
+
+                    <Label style="-fx-font-weight: bold;" text="Select time range" />
+
+                    <GridPane hgap="8" vgap="6">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="70" />
+                            <ColumnConstraints hgrow="ALWAYS" />
+                            <ColumnConstraints hgrow="ALWAYS" />
+                        </columnConstraints>
+
+                        <Label text="Start" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                        <Spinner fx:id="startHour" editable="true" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                        <Spinner fx:id="startMinute" editable="true" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+
+                        <Label text="End" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                        <Spinner fx:id="endHour" editable="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Spinner fx:id="endMinute" editable="true" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+
+                        <rowConstraints>
+                            <RowConstraints />
+                            <RowConstraints />
+                        </rowConstraints>
+                    </GridPane>
+
+                    <HBox spacing="8">
+                        <Button fx:id="nowBtn" text="Now" />
+                        <Button fx:id="plus30Btn" text="+30m" />
+                        <Button fx:id="plus1hBtn" text="+1h" />
+                        <Button fx:id="clearBtn" text="Clear" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="durationLabel" text="—" />
+                    </HBox>
+
+                    <Separator />
+
+                    <HBox alignment="CENTER_RIGHT" spacing="8">
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="cancelBtn" text="Cancel" />
+                        <Button fx:id="okBtn" defaultButton="true" text="Apply" />
+                    </HBox>
+                </VBox>
+            </content>
+        </CustomMenuItem>
+    </items>
+</fx:root>

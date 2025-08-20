@@ -4,22 +4,29 @@ public class Course {
     private String courseName;
     private char courseLetterDate;
 
-    private  PeriodTime periodTime;
+    private PeriodTime periodTime;
 
-    public Course(String courseName,char courseLetterDate,PeriodTime periodTime){
+    public Course(String courseName, char courseLetterDate, PeriodTime periodTime) {
         this.courseName = courseName;
-        this.courseLetterDate=courseLetterDate;
+        this.courseLetterDate = courseLetterDate;
         this.periodTime = periodTime;
     }
-    /** for jackson*/
-    public Course(){}
-    public String getCourseName(){
-        return  courseName;
+
+    /**
+     * for jackson
+     */
+    public Course() {
     }
-    public char getCourseLetterDate(){
+
+    public String getCourseName() {
+        return courseName;
+    }
+
+    public char getCourseLetterDate() {
         return courseLetterDate;
     }
-    public PeriodTime getPeriodTime(){
+
+    public PeriodTime getPeriodTime() {
         return periodTime;
     }
 

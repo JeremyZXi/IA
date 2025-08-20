@@ -1,8 +1,6 @@
 package com.example.planner.ui;
 
 import com.example.planner.data.ConfigManager;
-import com.example.planner.data.StorageManager;
-import com.example.planner.model.MasterList;
 import com.example.planner.model.PeriodTime;
 import com.example.planner.model.UserSettings;
 import javafx.fxml.FXML;
@@ -94,7 +92,8 @@ public class OnboardingController {
         show(screenSchedule);
         hide(screenCourses);
         if (periodRows.getChildren().isEmpty()) {
-            rebuildTimeRows();}
+            rebuildTimeRows();
+        }
     }
 
     @FXML
@@ -132,9 +131,10 @@ public class OnboardingController {
         show(screenSchedule);
         hide(screenCourses);
     }
+
     @FXML
-    private void addPeriod(){
-        periodPerDay = periodPerDay+1;
+    private void addPeriod() {
+        periodPerDay = periodPerDay + 1;
         HBox row = new HBox(12);
         row.setFillHeight(true);
 
@@ -161,9 +161,10 @@ public class OnboardingController {
         periodRows.getChildren().add(row);
         validateNoOverlapStylesOnly();
     }
+
     @FXML
-    private void deletePeriod(){
-        periodPerDay = periodPerDay-1;
+    private void deletePeriod() {
+        periodPerDay = periodPerDay - 1;
         int size = periodRows.getChildren().size();
         if (size > 0) {
             periodRows.getChildren().remove(size - 1);
@@ -237,14 +238,18 @@ public class OnboardingController {
 
             @Override
             public void decrement(int steps) {
-                if (value == null) {value = LocalTime.of(0, 0);}
+                if (value == null) {
+                    value = LocalTime.of(0, 0);
+                }
                 value = value.minusMinutes(5L * steps);
                 setValue(value);
             }
 
             @Override
             public void increment(int steps) {
-                if (value == null) {value = LocalTime.of(0, 0);}
+                if (value == null) {
+                    value = LocalTime.of(0, 0);
+                }
                 value = value.plusMinutes(5L * steps);
                 setValue(value);
             }

@@ -1,8 +1,6 @@
 package com.example.planner.model;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
-import com.example.planner.model.Course;
 
 public class Task {
     private Course course;
@@ -18,10 +16,14 @@ public class Task {
         this.description = description;
         this.dueDate = dueDate;
     }
-    /**For jackson*/
-    public Task(){}
 
-    public Task(String name, String description, LocalDate dueDate,Course course) {
+    /**
+     * For jackson
+     */
+    public Task() {
+    }
+
+    public Task(String name, String description, LocalDate dueDate, Course course) {
         this.name = name;
         this.description = description;
         this.dueDate = dueDate;
@@ -35,6 +37,7 @@ public class Task {
     public void setComplete(boolean complete) {
         this.complete = complete;
     }
+
     public String getName() {
         return name;
     }
@@ -62,7 +65,6 @@ public class Task {
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
     }
-
 
 
     public double getPriority() {

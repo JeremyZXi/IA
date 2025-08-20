@@ -38,7 +38,7 @@ public class PlannerController {
     @FXML
     private Button autoPlanBtn;
     @FXML
-    private VBox taskListVBox, pendingListVBox,completedTaskVBox;
+    private VBox taskListVBox, pendingListVBox, completedTaskVBox,todayTaskListVBox;
 
 
     // Right (detail)
@@ -52,7 +52,7 @@ public class PlannerController {
     private Button addAttachmentBtn;
     //add task
     @FXML
-    private CustomDatePicker datePicker = new CustomDatePicker();
+    private final CustomDatePicker datePicker = new CustomDatePicker();
 
 
     @FXML
@@ -67,12 +67,13 @@ public class PlannerController {
     private VBox courseOption;
     @FXML
     private Label selectedCourseDisplay;
-
+    @FXML
+    private TitledPane selectedCourseTitle;
     //filter and selection
     @FXML
     private HBox filterHBox;
     @FXML
-    private CustomDatePicker dateFilter = new CustomDatePicker();
+    private final CustomDatePicker dateFilter = new CustomDatePicker();
     @FXML
     private VBox classListVBox;
 
@@ -80,7 +81,7 @@ public class PlannerController {
     private TaskList regularTasks;
     private TaskList pendingTasks;
     private Task currentDetailTask;
-    private MdTextArea detailNote = new MdTextArea();
+    private final MdTextArea detailNote = new MdTextArea();
     private Course selectedCourse = null;
 
     //lookup table for detail pane
@@ -100,7 +101,7 @@ public class PlannerController {
         List<PeriodTime> periodTimes = settings.getPeriods();
 
         MasterList userData;
-        if (UserDataManager.dataExists()){
+        if (UserDataManager.dataExists()) {
             userData = UserDataManager.load();
         } else {
             MasterList newMaster = new MasterList();
@@ -125,8 +126,7 @@ public class PlannerController {
 
         //add the correct courses to display
 
-        setCourseList(date,classListVBox,schedule);
-
+        setCourseList(date, classListVBox, schedule);
 
 
         // Header text
@@ -168,21 +168,22 @@ public class PlannerController {
         datePicker.setAnnotationProvider(day ->
                 new CustomDatePicker.Annotation(String.valueOf(letterDate(day))));
         //dateBox.getChildren().add();
-        dateBox.getChildren().add(1,datePicker);
+        dateBox.getChildren().add(1, datePicker);
 
         //listen to date change and display corresponding courses
         datePicker.valueProperty().addListener((observable, oldValue, newValue) -> {
             List<Course> avalibleOption = new ArrayList<>();
             selectedCourse = null;//reset selected course
             selectedCourseDisplay.setText("");
+            selectedCourseTitle.setText("select course");
             if (letterDate(newValue) != '0') {
                 avalibleOption = schedule.get(letterDate2Index(letterDate(newValue)));
-            }else {
+            } else {
                 avalibleOption.add(new Course("Break", '0', new PeriodTime(0, LocalTime.parse("00:00"), LocalTime.parse("23:59"))));
             }
             courseOption.getChildren().clear(); //clear all the existing display
             for (Course course : avalibleOption) {
-                addClassCard(course,courseOption,true);
+                addClassCard(course, courseOption, true);
             }
         });
 
@@ -195,13 +196,14 @@ public class PlannerController {
         dateFilter.setValue(date);
         dateFilter.valueProperty().addListener((observable, oldValue, newValue) -> {
             //TODO:dynamically change the course display according to the date picked
-            setCourseList(newValue,classListVBox,schedule);
+            setCourseList(newValue, classListVBox, schedule);
+            date = dateFilter.getValue();
         });
         displayInbox();
 
 
-
     }
+
     public void shutdown() throws Exception {
         System.out.println("closed");
         MasterList userData = new MasterList();
@@ -220,10 +222,35 @@ public class PlannerController {
             regularTasks.addTask(new Task(name, description, dueDate));
         } else {
             regularTasks.addTask(new Task(name, description, dueDate, selectedCourse));
+            if (subjectTitleLabel.getText().equals(selectedCourse.getCourseName())){
+                taskListVBox.getChildren().clear();
+                todayTaskListVBox.getChildren().clear();
+                completedTaskVBox.getChildren().clear();
+                pendingListVBox.getChildren().clear();
+
+                for (Task task : regularTasks.getTaskList()) {
+                    if(task.getCourse() != null){
+                        if (task.getCourse().getCourseName().equals(selectedCourse.getCourseName())) {
+                            if (!task.isComplete()) {
+                                if(task.getDueDate().isEqual(date)){
+                                    addTaskCard(task, todayTaskListVBox);
+                                } else if(task.getDueDate().isAfter(date)) {
+                                    addTaskCard(task, taskListVBox);
+                                } else {
+                                    addTaskCard(task, pendingListVBox);
+                                }
+                            } else {
+                                addTaskCard(task, completedTaskVBox);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        // refresh the currently visible view
-        refreshVisibleTasks();
+
+
+
 
         // clear inputs
         quickTaskField.clear();
@@ -231,6 +258,7 @@ public class PlannerController {
         datePicker.setValue(null);
         selectedCourse = null;
         selectedCourseDisplay.setText("");
+        selectedCourseTitle.setText("select course");
     }
 
     @FXML
@@ -246,6 +274,8 @@ public class PlannerController {
             if (!task.isComplete()) {
                 if (task.getDueDate() != null && date.isAfter(task.getDueDate())) {
                     addTaskCard(task, pendingListVBox);
+                } else if(task.getDueDate() != null && date.isEqual(task.getDueDate())){
+                    addTaskCard(task, todayTaskListVBox);
                 } else {
                     addTaskCard(task, taskListVBox);
                 }
@@ -263,7 +293,7 @@ public class PlannerController {
         periodInfoLabel.setText(periodInfo);
     }
 
-    public void setCourseList(LocalDate date,VBox target,List<List<Course>> schedule){
+    public void setCourseList(LocalDate date, VBox target, List<List<Course>> schedule) {
         target.getChildren().clear();
         List<Course> courses = new ArrayList<>();
         if (letterDate(date) != '0') {
@@ -273,11 +303,11 @@ public class PlannerController {
         }
 
         for (Course course : courses) {
-            addClassCard(course, target,false);
+            addClassCard(course, target, false);
         }
     }
 
-    public void addClassCard(Course course, VBox target,boolean isLable) {
+    public void addClassCard(Course course, VBox target, boolean isLable) {
         // A class "card" as a Button with title+subtitle (clickable)
 
         //extract information from the course
@@ -297,35 +327,46 @@ public class PlannerController {
         card.setMinHeight(56);
         card.setStyle("-fx-background-color:white; -fx-border-color:#cccccc; -fx-alignment:BASELINE_LEFT; -fx-padding:8;");
         HBox.setHgrow(card, Priority.ALWAYS);
-        if(!isLable){
-        card.setOnAction(e -> {
-            // change center header when a class is selected
-            taskListVBox.getChildren().clear();
-            completedTaskVBox.getChildren().clear();
+        if (!isLable) {
+            card.setOnAction(e -> {
+                // change center header when a class is selected
+                taskListVBox.getChildren().clear();
+                todayTaskListVBox.getChildren().clear();
+                completedTaskVBox.getChildren().clear();
+                pendingListVBox.getChildren().clear();
 
-            setCenterHeader(title, subtitle);
-            System.out.println("Selected class: " + title);
-            for(Task task:regularTasks.getTaskList()){
-                if(task.getCourse().getCourseName().equals(title)){
-                    if(!task.isComplete()){
-                        addTaskCard(task,taskListVBox);
-                    } else {
-                        addTaskCard(task,completedTaskVBox);
+                setCenterHeader(title, subtitle+","+humanDate(date));
+                System.out.println("Selected class: " + title);
+                for (Task task : regularTasks.getTaskList()) {
+                    if(task.getCourse() != null){
+                        if (task.getCourse().getCourseName().equals(title)) {
+                            if (!task.isComplete()) {
+                                if(task.getDueDate().isEqual(date)){
+                                    addTaskCard(task, todayTaskListVBox);
+                                } else if(task.getDueDate().isAfter(date)) {
+                                    addTaskCard(task, taskListVBox);
+                                } else {
+                                    addTaskCard(task, pendingListVBox);
+                                }
+                            } else {
+                                addTaskCard(task, completedTaskVBox);
+                            }
+                        }
                     }
                 }
-            }
-
-        });
-        }else {
+            });
+        } else {
             card.setOnAction(e -> {
                 selectedCourse = course;
                 selectedCourseDisplay.setText(course.getCourseName());
+
+                selectedCourseTitle.setText(course.getCourseName());
+
+
             });
         }
         target.getChildren().add(card);
     }
-
-
 
 
     public void addTaskCard(Task task, VBox target) {
@@ -355,8 +396,6 @@ public class PlannerController {
     }
 
 
-
-
     private void saveCurrentDetail() {
         if (currentDetailTask != null && detailNote.isDirty()) {
             currentDetailTask.setDescription(detailNote.getText());
@@ -372,35 +411,13 @@ public class PlannerController {
 
         this.currentDetailTask = task;
         detailDoneCheck.setSelected(task.isComplete());
-        detailMetaLabel.setText(task.getDueDate() != null ? task.getDueDate().toString()+" | "+task.getCourse().getCourseName()+" Period "+task.getCourse().getPeriodTime().getPeriodNumber()+" | "+task.getCourse().getPeriodTime().getStart().toString()+"~"+task.getCourse().getPeriodTime().getEnd().toString(): "");
+        detailMetaLabel.setText(task.getDueDate() != null ? task.getDueDate().toString() + " | " + task.getCourse().getCourseName() + " Period " + task.getCourse().getPeriodTime().getPeriodNumber() + " | " + task.getCourse().getPeriodTime().getStart().toString() + "~" + task.getCourse().getPeriodTime().getEnd().toString() : "");
         detailTitleLabel.setText(task.getName());
         //detailBodyLabel.setText(task.getDescription() != null ? task.getDescription() : "");
         detailNote.setInputSpace(task.getDescription() != null ? task.getDescription() : "");
     }
 
-    private boolean isInboxView() {
-        return "Inbox".equals(subjectTitleLabel.getText());
-    }
 
-    private void refreshVisibleTasks() {
-        if (isInboxView()) {
-            displayInbox();
-            return;
-        }
-        String currentCourse = subjectTitleLabel.getText();
-        taskListVBox.getChildren().clear();
-        completedTaskVBox.getChildren().clear();
-
-        for (Task t : regularTasks.getTaskList()) {
-            if (t.getCourse() != null && currentCourse.equals(t.getCourse().getCourseName())) {
-                if (!t.isComplete()) {
-                    addTaskCard(t, taskListVBox);
-                } else {
-                    addTaskCard(t, completedTaskVBox);
-                }
-            }
-        }
-    }
 
 
 

@@ -4,10 +4,11 @@ import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.SplitPane;
-
 import javafx.scene.control.TextArea;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
@@ -15,13 +16,12 @@ import javafx.scene.web.WebView;
 import java.io.IOException;
 import java.util.Objects;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-
 public class MdTextArea extends SplitPane {
 
-    @FXML private TextArea inputSpace;
-    @FXML private WebView  displaySpace;
+    @FXML
+    private TextArea inputSpace;
+    @FXML
+    private WebView displaySpace;
 
     private final BooleanProperty dirty = new SimpleBooleanProperty(false);
 
@@ -50,7 +50,7 @@ public class MdTextArea extends SplitPane {
     private void initialize() {
         // init flexmark
         MutableDataSet options = new MutableDataSet();
-        parser   = Parser.builder(options).build();
+        parser = Parser.builder(options).build();
         renderer = HtmlRenderer.builder(options).build();
 
         // init web engine
@@ -65,26 +65,37 @@ public class MdTextArea extends SplitPane {
             webEngine.loadContent(wrapWithStyle(html), "text/html");
         });
     }
+
     private String wrapWithStyle(String bodyHtml) {
         String cssUrl = Objects.requireNonNull(
                 getClass().getResource("/css/swiss.css")
         ).toExternalForm();
 
         return """
-        <!doctype html><html><head><meta charset="utf-8">
-        <link rel="stylesheet" href="%s">
-        </head><body>%s</body></html>
-        """.formatted(cssUrl, bodyHtml);
+                <!doctype html><html><head><meta charset="utf-8">
+                <link rel="stylesheet" href="%s">
+                </head><body>%s</body></html>
+                """.formatted(cssUrl, bodyHtml);
     }
 
 
     public void setInputSpace(String inputText) {
         this.inputSpace.setText(inputText);
     }
-    public String getText(){
+
+    public String getText() {
         return content;
     }
-    public boolean isDirty() { return dirty.get(); }
-    public void clearDirty() { dirty.set(false); }
-    public BooleanProperty dirtyProperty() { return dirty; }
+
+    public boolean isDirty() {
+        return dirty.get();
+    }
+
+    public void clearDirty() {
+        dirty.set(false);
+    }
+
+    public BooleanProperty dirtyProperty() {
+        return dirty;
+    }
 }

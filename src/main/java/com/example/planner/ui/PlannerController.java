@@ -111,16 +111,8 @@ public class PlannerController {
         }
 
         //add the correct courses to display
-        List<Course> courseToday = new ArrayList<>();
-        if (letterDate(date) != '0') {
-            courseToday = schedule.get(letterDate2Index(letterDate(date)));
-        } else {
-            courseToday.add(new Course("Break", '0', new PeriodTime(0, LocalTime.parse("00:00"), LocalTime.parse("23:59"))));
-        }
 
-        for (Course course : courseToday) {
-            addClassCard(course, classListVBox,false);
-        }
+        setCourseList(date,classListVBox,schedule);
 
         if (StorageManager.storageExists()) {
             //TODO:should create a new manager for pending task or somehow combine them
@@ -182,9 +174,11 @@ public class PlannerController {
         dateFilter.setAnnotationProvider(day ->
                 new CustomDatePicker.Annotation(String.valueOf(letterDate(day))));
         filterHBox.getChildren().add(dateFilter);
+        //set initial value AKA today
         dateFilter.setValue(date);
         dateFilter.valueProperty().addListener((observable, oldValue, newValue) -> {
             //TODO:dynamically change the course display according to the date picked
+            setCourseList(newValue,classListVBox,schedule);
         });
 
 
@@ -207,6 +201,20 @@ public class PlannerController {
     public void setCenterHeader(String subject, String periodInfo) {
         subjectTitleLabel.setText(subject);
         periodInfoLabel.setText(periodInfo);
+    }
+
+    public void setCourseList(LocalDate date,VBox target,List<List<Course>> schedule){
+        target.getChildren().clear();
+        List<Course> courses = new ArrayList<>();
+        if (letterDate(date) != '0') {
+            courses = schedule.get(letterDate2Index(letterDate(date)));
+        } else {
+            courses.add(new Course("Break", '0', new PeriodTime(0, LocalTime.parse("00:00"), LocalTime.parse("23:59"))));
+        }
+
+        for (Course course : courses) {
+            addClassCard(course, target,false);
+        }
     }
 
     public void addClassCard(Course course, VBox target,boolean isLable) {

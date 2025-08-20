@@ -89,7 +89,7 @@
                       </HBox>
                </children>
             </VBox>
-            <HBox prefHeight="100.0" prefWidth="200.0">
+            <HBox fx:id="filterHBox" prefHeight="100.0" prefWidth="200.0">
                <children>
                   <Button mnemonicParsing="false" prefHeight="26.0" prefWidth="103.0" text="Inbox" />
                </children>

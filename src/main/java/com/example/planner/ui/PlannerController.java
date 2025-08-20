@@ -35,8 +35,7 @@ public class PlannerController {
     // Left main
     @FXML
     private Label greetingLabel, dateLabel;
-    @FXML
-    private VBox classListVBox;
+
 
     // Center
     @FXML
@@ -58,6 +57,7 @@ public class PlannerController {
     //add task
     @FXML
     private CustomDatePicker datePicker = new CustomDatePicker();
+
     @FXML
     private Button addTaskBtn;
     @FXML
@@ -72,6 +72,14 @@ public class PlannerController {
     private VBox courseOption;
     @FXML
     private Label selectedCourseDisplay;
+
+    //filter and selection
+    @FXML
+    private HBox filterHBox;
+    @FXML
+    private CustomDatePicker dateFilter = new CustomDatePicker();
+    @FXML
+    private VBox classListVBox;
 
     private LocalDate date = LocalDate.parse("2025-08-10");//LocalDate.now();
     private TaskList regularTasks;
@@ -163,10 +171,20 @@ public class PlannerController {
                 avalibleOption.add(new Course("Break", '0', new PeriodTime(0, LocalTime.parse("00:00"), LocalTime.parse("23:59"))));
             }
             //TODO: 每次改变date的时候要刷新，而不是直接往上加
-
+            courseOption.getChildren().clear(); //clear all the existing display
             for (Course course : avalibleOption) {
                 addClassCard(course,courseOption,true);
             }
+        });
+
+
+        //add filter datepicker
+        dateFilter.setAnnotationProvider(day ->
+                new CustomDatePicker.Annotation(String.valueOf(letterDate(day))));
+        filterHBox.getChildren().add(dateFilter);
+        dateFilter.setValue(date);
+        dateFilter.valueProperty().addListener((observable, oldValue, newValue) -> {
+            //TODO:dynamically change the course display according to the date picked
         });
 
 
